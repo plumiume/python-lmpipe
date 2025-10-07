@@ -15,6 +15,7 @@ class OutputOptions(TypedDict):
     annotated_frames_save_height: int
     annotated_frames_save_fps: float
     annotated_frames_save_fourcc: int
+    annotated_frames_save_ext: str
 
 class OutputOptionsPartial(TypedDict, total=False):
     landmarks_matrix_save_format: LMWFormatLiteral
@@ -24,6 +25,7 @@ class OutputOptionsPartial(TypedDict, total=False):
     annotated_frames_save_height: int
     annotated_frames_save_fps: float
     annotated_frames_save_fourcc: int
+    annotated_frames_save_ext: str
 
 class OutputOptionsGroup(mixin.ReprMixin):
     landmarks_matrix_save_format: LMWFormatLiteral = None
@@ -40,6 +42,8 @@ class OutputOptionsGroup(mixin.ReprMixin):
     'fps to save annotated frames'
     annotated_frames_save_fourcc: int = cv2.VideoWriter.fourcc(*'mp4v')
     'fourcc to save annotated frames, default is "mp4v"'
+    annotated_frames_save_ext: str = '.mp4'
+    'file extension to save annotated frames, default is ".mp4"'
 
 DEFAULT_OUTPUT_OPTIONS: OutputOptions = {
     'landmarks_matrix_save_format': None,
@@ -49,6 +53,7 @@ DEFAULT_OUTPUT_OPTIONS: OutputOptions = {
     'annotated_frames_save_height': 480,
     'annotated_frames_save_fps': 30.0,
     'annotated_frames_save_fourcc': cv2.VideoWriter.fourcc(*'mp4v'),
+    'annotated_frames_save_ext': '.mp4',
 }
 
 class ExecutorOptions(TypedDict):

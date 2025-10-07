@@ -6,8 +6,8 @@ import numpy as np
 
 from .base import BaseCollector, ProcessFrameResult, NDArrayFloat, NDArrayStr
 
-FormatLiteral = Literal['npy', 'csv', 'json', None]
-Formats = ('npy', 'csv', 'json', None)
+FormatLiteral = Literal['.npy', '.csv', '.json'] | None
+Formats: tuple[FormatLiteral, ...] = ('.npy', '.csv', '.json', None)
 
 class LandmarksMatrixWriter(BaseCollector, ABC):
 
@@ -28,12 +28,12 @@ class DummyLandmarksMatrixWriter(LandmarksMatrixWriter):
 class NpyLandmarksMatrixWriter(LandmarksMatrixWriter):
 
     def __init__(self, path: Path):
-        self.path = path
+        self.path = path.with_suffix('.npy')
         self.container = list[NDArrayFloat]()
 
     def collect_matrix(self, headers: NDArrayStr, landmarks: NDArrayFloat, frame_idx: int):
 
-        self.container.append(landmarks)
+        self.container.append(landmarks.flatten())
 
     def close(self):
         np.save(self.path, np.stack(self.container))
@@ -42,13 +42,15 @@ class CsvLandmarksMatrixWriter(LandmarksMatrixWriter):
 
     def __init__(self, path: Path, header: list[str] | None = None):
 
-        self.file = open(path, mode='a')
+        self.path = path.with_suffix('.csv')
+        open(self.path, mode='w').close()
+        self.file = open(self.path, mode='a')
         if header is not None:
             self.file.write(','.join(header))
             self.file.write('\n')
 
     def collect_matrix(self, headers: NDArrayStr, landmarks: NDArrayFloat, frame_idx: int):
-        np.savetxt(self.file, landmarks)
+        np.savetxt(self.file, landmarks.reshape(1, -1), delimiter=',')
 
     def close(self):
         self.file.close()
@@ -56,13 +58,13 @@ class CsvLandmarksMatrixWriter(LandmarksMatrixWriter):
 class JsonLandmarksMatrixWriter(LandmarksMatrixWriter):
 
     def __init__(self, path: Path, header: list[str] | None = None):
-        self.path = path
+        self.path = path.with_suffix('.json')
         self.header = header 
         self.container = list[NDArrayFloat]()
 
     def collect_matrix(self, headers: NDArrayStr, landmarks: NDArrayFloat, frame_idx: int):
 
-        self.container.append(landmarks)
+        self.container.append(landmarks.flatten())
 
     def close(self):
         import json

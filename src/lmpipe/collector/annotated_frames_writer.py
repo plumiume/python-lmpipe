@@ -8,8 +8,8 @@ from cv2.typing import MatLike
 
 from .base import BaseCollector, ProcessFrameResult
 
-FormatLiteral = Literal['cv2', None]
-Formats = ('cv2', None)
+FormatLiteral = Literal['cv2'] | None
+Formats: tuple[FormatLiteral, ...] = ('cv2', None)
 
 class AnnotatedFramesWriter(BaseCollector, ABC):
 
@@ -39,10 +39,13 @@ class Cv2AnnotatedFramesWriter(AnnotatedFramesWriter):
         height: int,
         fps: float,
         fourcc: int,
+        ext: str
         ):
 
+        self.path = path.with_suffix(ext)
+
         self.writer = cv2.VideoWriter(
-            filename=str(path),
+            filename=str(self.path),
             fourcc=fourcc,
             fps=fps, 
             frameSize=(width, height)

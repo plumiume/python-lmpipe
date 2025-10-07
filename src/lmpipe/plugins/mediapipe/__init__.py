@@ -1,3 +1,7 @@
+
+from absl import logging
+logging.set_verbosity(logging.ERROR)
+
 from ..loader import _Info3 # pyright: ignore[reportPrivateUsage]
 
 from .pose.args import MediaPipePoseArgs
@@ -10,11 +14,17 @@ def pose_factory(args: MediaPipePoseArgs.T):
 
 pose_entry: _Info3 = (MediaPipePoseArgs, pose_factory, 'mediapipe')
 
-def hand_factory(args: MediaPipeHandArgs.T):
+def left_hand_factory(args: MediaPipeHandArgs.T):
     from .hand.main import MediaPipeHandEstimator
-    return MediaPipeHandEstimator(args)
+    return MediaPipeHandEstimator(args, 'left')
 
-hand_entry: _Info3 = (MediaPipeHandArgs, hand_factory, 'mediapipe')
+left_hand_entry: _Info3 = (MediaPipeHandArgs, left_hand_factory, 'mediapipe')
+
+def right_hand_factory(args: MediaPipeHandArgs.T):
+    from .hand.main import MediaPipeHandEstimator
+    return MediaPipeHandEstimator(args, 'right')
+
+right_hand_entry: _Info3 = (MediaPipeHandArgs, right_hand_factory, 'mediapipe')
 
 def face_factory(args: MediaPipeFaceArgs.T):
     from .face.main import MediaPipeFaceEstimator

@@ -5,7 +5,8 @@ from pathlib import Path
 from uuid import uuid4, UUID
 from threading import local
 from multiprocessing import cpu_count
-from concurrent.futures import Executor, Future, ProcessPoolExecutor
+from concurrent.futures import Executor, Future
+from loky import ProcessPoolExecutor # pyright: ignore[reportMissingTypeStubs]
 from weakref import WeakValueDictionary
 
 import cv2
@@ -51,6 +52,19 @@ def dummy(*args: object, **kwargs: object): pass
 type _Item = object
 
 class Pipeline:
+
+    ## Serialize
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        # Remove unpicklable entries
+        state['_batch_executor'] = None
+        state['_sample_executor'] = None
+        state['_worker_network_queue'] = None
+        return state
+
+    def __setstate__(self, state: dict[str, object]):
+        self.__dict__.update(state)
 
     ## Constructor
 
@@ -105,7 +119,9 @@ class Pipeline:
         if src_path.is_file():
             return self._run_sample((src_path, dst_path), options_)
 
-        raise ValueError
+        if not src_path.exists():
+            raise FileNotFoundError(f"Source path '{src_path}' does not exist.")
+        raise ValueError(f"Source path '{src_path}' is neither a file nor a directory.")
 
     def run_batch(self, src: PathLike, dst: PathLike, **options: Unpack[LMPipeOptionsPartial]):
         """Process multiple files in a directory in batch mode.
@@ -126,7 +142,9 @@ class Pipeline:
         if src_path.is_dir():
             return self._run_batch((src_path, dst_path), options_)  
 
-        raise ValueError
+        raise ValueError(
+            f"Source path '{src_path}' is not a directory."
+        )
 
     def run_sample(self, src: PathLike, dst: PathLike, **options: Unpack[LMPipeOptionsPartial]):
         """Process a single file sample.
@@ -147,7 +165,9 @@ class Pipeline:
         if src_path.is_file():
             return self._run_sample((src_path, dst_path), options_)
 
-        raise ValueError
+        raise ValueError(
+            f"Source path '{src_path}' is not a file."
+        )
 
     def run_video(self, src: PathLike, dst: PathLike, **options: Unpack[LMPipeOptionsPartial]):
         """Process a video file.
@@ -168,7 +188,9 @@ class Pipeline:
         if is_video_file(src_path):
             return self._run_video((src_path, dst_path), options_)
 
-        raise ValueError
+        raise ValueError(
+            f"Source path '{src_path}' is not a video file."
+        )
 
     def run_image_sequence(self, src: PathLike, dst: PathLike, **options: Unpack[LMPipeOptionsPartial]):
         """Process an image sequence directory.
@@ -189,7 +211,9 @@ class Pipeline:
         if is_image_sequence_dir(src_path):
             return self._run_image_sequence((src_path, dst_path), options_)
 
-        raise ValueError
+        raise ValueError(
+            f"Source path '{src_path}' is not an image sequence directory."
+        )
 
     def run_image(self, src: PathLike, dst: PathLike, **options: Unpack[LMPipeOptionsPartial]):
         """Process a single image file.
@@ -210,7 +234,9 @@ class Pipeline:
         if is_image_file(src_path):
             return self._run_image((src_path, dst_path), options_)
 
-        raise ValueError
+        raise ValueError(
+            f"Source path '{src_path}' is not an image file."
+        )
 
     def run_stream(self, src: int, dst: PathLike, **options: Unpack[LMPipeOptionsPartial]):
         """Process a camera stream or other video input device.
@@ -264,9 +290,11 @@ class Pipeline:
         if not capture.isOpened():
             raise ValueError
 
+        executor = self._get_sample_executor(options)
+
         sample_map = self._process_sample(
             frames=video_capture_frame_generator(capture),
-            executor=self._get_sample_executor(options),
+            executor=executor,
             options=options
         )
 
@@ -276,9 +304,11 @@ class Pipeline:
 
     def _run_image_sequence(self, src_dst: SrcDst, options: LMPipeOptions):
 
+        executor = self._get_sample_executor(options)
+
         sample_map = self._process_sample(
             frames=image_sequence_frame_generator(src_dst[0]),
-            executor=self._get_sample_executor(options),
+            executor=executor,
             options=options
         )
 
@@ -288,9 +318,11 @@ class Pipeline:
 
     def _run_image(self, src_dst: SrcDst, options: LMPipeOptions):
 
+        executor = self._get_sample_executor(options)
+
         sample_ftr = self._process_image(
             frame=cv2.imread(str(src_dst[0])),
-            executor=self._get_sample_executor(options),
+            executor=executor,
             options=options
         )
 
@@ -302,9 +334,11 @@ class Pipeline:
         if not capture.isOpened():
             raise ValueError
 
+        executor = self._get_sample_executor(options)
+
         sample_map = self._process_sample(
             frames=video_capture_frame_generator(capture),
-            executor=self._get_sample_executor(options),
+            executor=executor,
             options=options
         )
 
@@ -381,6 +415,9 @@ class Pipeline:
 
     def _collect_sample_iter(self, sample_iter: Iterator[ProcessFrameResult], dst: Path, options: LMPipeOptions):
 
+        if '{task}' not in str(dst):
+            dst = dst / '{task}'
+
         collectors: list[BaseCollector] = [
             self._get_landmarks_matrix_writer(dst, options),
             self._get_annotated_frames_viewer(options),
@@ -399,6 +436,9 @@ class Pipeline:
 
     def _collect_sample_ftr(self, sample_ftr: Future[ProcessFrameResult], dst: Path, options: LMPipeOptions):
 
+        if '{task}' not in str(dst):
+            dst = dst / '{task}'
+
         collectors: list[BaseCollector] = [
             self._get_landmarks_matrix_writer(dst, options),
             self._get_annotated_frames_viewer(options),
@@ -415,15 +455,18 @@ class Pipeline:
 
     def _get_landmarks_matrix_writer(self, dst: Path, options: LMPipeOptions) -> LandmarksMatrixWriter:
 
+        formatted_dst = Path(str(dst).format(task='landmarks'))
+        formatted_dst.parent.mkdir(parents=True, exist_ok=True)
+
         match options['landmarks_matrix_save_format']:
             case None:
                 landmarks_matrix_writer = DummyLandmarksMatrixWriter()
             case '.npy':
-                landmarks_matrix_writer = NpyLandmarksMatrixWriter(dst)
+                landmarks_matrix_writer = NpyLandmarksMatrixWriter(formatted_dst)
             case '.csv':
-                landmarks_matrix_writer = CsvLandmarksMatrixWriter(dst)
+                landmarks_matrix_writer = CsvLandmarksMatrixWriter(formatted_dst)
             case '.json':
-                landmarks_matrix_writer = JsonLandmarksMatrixWriter(dst)
+                landmarks_matrix_writer = JsonLandmarksMatrixWriter(formatted_dst)
             case _:
                 raise ValueError
 
@@ -442,17 +485,21 @@ class Pipeline:
         return annotated_frames_viewer
 
     def _get_annotated_frames_writer(self, dst: Path, options: LMPipeOptions) -> AnnotatedFramesWriter:
+
+        formatted_dst = Path(str(dst).format(task='annotated_frames'))
+        formatted_dst.parent.mkdir(parents=True, exist_ok=True)
     
         match options['annotated_frames_save_format']:
             case None:
                 annotated_frames_writer = DummyAnnotatedFramesWriter()
             case 'cv2':
                 annotated_frames_writer = Cv2AnnotatedFramesWriter(
-                    dst,
+                    formatted_dst,
                     options['annotated_frames_save_width'],
                     options['annotated_frames_save_height'],
                     options['annotated_frames_save_fps'],
                     options['annotated_frames_save_fourcc'],
+                    options['annotated_frames_save_ext']
                 )
             case _:
                 raise ValueError

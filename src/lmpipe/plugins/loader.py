@@ -1,5 +1,5 @@
 # pyright: reportUnnecessaryIsInstance=false
-from typing import Any, Callable as C, Literal
+from typing import Any, Callable as C, Literal, TypeGuard
 from pathlib import Path
 import importlib.metadata
 
@@ -30,10 +30,14 @@ type _Info2 = tuple[
     NamespaceWrapper[Any], # args
     C[[Any], Estimator] # estimator factory
 ]
+def _is_info2(v: Any) -> TypeGuard[_Info2]:
+    return len(v) == 2
 type _Info3 = tuple[
     *_Info2,
     _PluginName # plugin name
 ]
+def _is_info3(v: Any) -> TypeGuard[_Info3]:
+    return len(v) == 3
 type _Plugins = dict[TypeLiteral, dict[_PluginName, _Info2]]
 
 def load_plugins() -> _Plugins:
@@ -48,17 +52,27 @@ def load_plugins() -> _Plugins:
 
         info = ep.load()
 
-        match len(info):
+        # match len(info):
 
-            case 2:
-                args, factory = info
-                plugin_name = ep.module.split(".")[0]
-            case 3:
-                args, factory, plugin_name = info
-            case _:
-                raise ValueError(
-                    f"Invalid plugin info length: {len(info)}"
-                )
+        #     case 2:
+        #         args, factory = info
+        #         plugin_name = ep.module.split(".")[0]
+        #     case 3:
+        #         args, factory, plugin_name = info
+        #     case _:
+        #         raise ValueError(
+        #             f"Invalid plugin info length: {len(info)}"
+        #         )
+
+        if _is_info2(info):
+            args, factory = info
+            plugin_name = ep.name.rsplit(".", 1)[0]
+        elif _is_info3(info):
+            args, factory, plugin_name = info
+        else:
+            raise ValueError(
+                f"Invalid plugin info length: {len(info)}"
+            )
 
         type_name = ep.name.rsplit(".", 1)[-1]
 
@@ -72,7 +86,6 @@ def load_plugins() -> _Plugins:
                 f"Duplicate plugin name: {plugin_name} for type {type_name}"
             )
 
-        plugins[type_name][plugin_name] = (args, factory)
-
+        plugins[type_name][plugin_name] = (args.copy(), factory)
 
     return plugins

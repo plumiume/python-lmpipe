@@ -26,7 +26,9 @@ def main():
         face = holistic.face or face
 
     if pose:
-        selected_type_name: str = getattr(pose, "_command")
+        # selected_type_name: str = getattr(pose, "_command")
+        selected_type_name = pose.command
+        assert selected_type_name is not None
         namespace = getattr(pose, selected_type_name)
         pose_estimator = plugins['pose'][selected_type_name][1](namespace)
         if not isinstance(pose_estimator, HolisticPoseEstimator):
@@ -38,7 +40,9 @@ def main():
         pose_estimator = None
 
     if hand:
-        selected_type_name = getattr(hand, "_command")
+        # selected_type_name = getattr(hand, "_command")
+        selected_type_name = hand.command
+        assert selected_type_name is not None
         namespace = getattr(hand, selected_type_name)
         temp_estimator = plugins['hand'][selected_type_name][1](namespace)
         if not isinstance(temp_estimator, HolisticPartEstimator | None):
@@ -50,7 +54,9 @@ def main():
         right_hand_estimator = None
 
     if left_hand:
-        selected_type_name = getattr(left_hand, "_command")
+        # selected_type_name = getattr(left_hand, "_command")
+        selected_type_name = left_hand.command
+        assert selected_type_name is not None
         namespace = getattr(left_hand, selected_type_name)
         left_hand_estimator = plugins['left_hand'][selected_type_name][1](namespace)
         if not isinstance(left_hand_estimator, HolisticPartEstimator | None):
@@ -60,7 +66,9 @@ def main():
         right_hand_estimator = None
 
     if right_hand:
-        selected_type_name = getattr(right_hand, "_command")
+        # selected_type_name = getattr(right_hand, "_command")
+        selected_type_name = right_hand.command
+        assert selected_type_name is not None
         namespace = getattr(right_hand, selected_type_name)
         right_hand_estimator = plugins['right_hand'][selected_type_name][1](namespace)
         if not isinstance(right_hand_estimator, HolisticPartEstimator | None):
@@ -70,7 +78,9 @@ def main():
         right_hand_estimator = None
 
     if face:
-        selected_type_name = getattr(face, "_command")
+        # selected_type_name = getattr(face, "_command")
+        selected_type_name = face.command
+        assert selected_type_name is not None
         namespace = getattr(face, selected_type_name)
         face_estimator = plugins['face'][selected_type_name][1](namespace)
         if not isinstance(face_estimator, HolisticPartEstimator | None):

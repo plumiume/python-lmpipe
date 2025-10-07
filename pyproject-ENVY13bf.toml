@@ -4,14 +4,12 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 authors = [
-    { name = "ikeda", email = "ikeda@lee-lab.org" }
+    { name = "plumiume", email = "plumiume@gmail.com" }
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "absl-py>=2.3.1",
     "clipar",
     "cloudpickle>=3.1.1",
-    "loky>=3.5.6",
     "mediapipe>=0.10.14",
     "opencv-python>=4.12.0.88",
     "parse>=1.20.2",
@@ -23,8 +21,7 @@ lmpipe = "lmpipe.app.cli.__main__:main"
 
 [project.entry-points."lmpipe.plugins"]
 "mediapipe.pose" = "lmpipe.plugins.mediapipe:pose_entry"
-"mediapipe.left_hand" = "lmpipe.plugins.mediapipe:left_hand_entry"
-"mediapipe.right_hand" = "lmpipe.plugins.mediapipe:right_hand_entry"
+"mediapipe.hand" = "lmpipe.plugins.mediapipe:hand_entry"
 "mediapipe.face" = "lmpipe.plugins.mediapipe:face_entry"
 
 [build-system]
@@ -32,10 +29,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.uv.sources]
-# Primary: dev branch (for development)
-clipar = { git = "https://github.com/plumiume/python-clipar.git", branch = "dev/latest" }
-# Fallback: main branch (uncomment if dev branch fails)
-# clipar = { git = "https://github.com/plumiume/python-clipar.git", branch = "main" }
+clipar = { git = "https://github.com/plumiume/python-clipar.git" }
 
 [dependency-groups]
 dev = [

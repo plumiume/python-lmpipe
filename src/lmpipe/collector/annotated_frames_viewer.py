@@ -6,8 +6,8 @@ from cv2.typing import MatLike
 
 from .base import BaseCollector, ProcessFrameResult
 
-FormatLiteral = Literal['cv2', None]
-Formats = ('cv2', None)
+FormatLiteral = Literal['cv2'] | None
+Formats: tuple[FormatLiteral, ...] = ('cv2', None)
 
 class AnnotatedFramesViewer(BaseCollector, ABC):
 
