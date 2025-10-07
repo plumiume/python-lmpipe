@@ -1,0 +1,78 @@
+# pyright: reportUnnecessaryIsInstance=false
+from typing import Any, Callable as C, Literal
+from pathlib import Path
+import importlib.metadata
+
+from clipar.entities import NamespaceWrapper
+from ..estimator import Estimator
+from ..estimator.holistic import HolisticPartLiteral as _HolisticPartLiteral, HOLISTIC_PARTS_LITERALS
+
+TypeLiteral = (
+    _HolisticPartLiteral | Literal['left_hand', 'right_hand']
+)
+_PluginName = str
+
+TYPE_LITERALS = (
+    *HOLISTIC_PARTS_LITERALS,
+)
+
+_ENGINES_PATH = Path(__file__).parent
+
+# pyproject.toml @ plugin package
+# [project.entry-points."lmpipe.plugins"]
+# {name: type literal} = "..." # ref of _Info* object
+
+# entry_points = importlib.metadata.entry_points(
+#     group="lmpipe.plugins"
+# )
+
+type _Info2 = tuple[
+    NamespaceWrapper[Any], # args
+    C[[Any], Estimator] # estimator factory
+]
+type _Info3 = tuple[
+    *_Info2,
+    _PluginName # plugin name
+]
+type _Plugins = dict[TypeLiteral, dict[_PluginName, _Info2]]
+
+def load_plugins() -> _Plugins:
+
+    entry_points = importlib.metadata.entry_points(
+        group="lmpipe.plugins"
+    )
+
+    plugins: _Plugins = {t: {} for t in TYPE_LITERALS}
+
+    for ep in entry_points:
+
+        info = ep.load()
+
+        match len(info):
+
+            case 2:
+                args, factory = info
+                plugin_name = ep.module.split(".")[0]
+            case 3:
+                args, factory, plugin_name = info
+            case _:
+                raise ValueError(
+                    f"Invalid plugin info length: {len(info)}"
+                )
+
+        type_name = ep.name.rsplit(".", 1)[-1]
+
+        if not type_name in TYPE_LITERALS:
+            raise ValueError(
+                f"Invalid plugin type literal: {ep.name}"
+            )
+
+        if type_name in plugins and plugin_name in plugins[type_name]:
+            raise ValueError(
+                f"Duplicate plugin name: {plugin_name} for type {type_name}"
+            )
+
+        plugins[type_name][plugin_name] = (args, factory)
+
+
+    return plugins
