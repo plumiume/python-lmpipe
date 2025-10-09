@@ -1,7 +1,4 @@
 from clipar import NotSelected
-
-from ...pipeline import Pipeline
-from ...estimator.holistic.main import HolisticEstimator, HolisticPoseEstimator, HolisticPartEstimator
 from .args import GlobalArgs, plugins
 
 def main():
@@ -11,6 +8,9 @@ def main():
     lmpipe_args = global_args.lmpipe_options
     if lmpipe_args is NotSelected:
         raise ValueError("lmpipe_args is required")
+
+    from ...pipeline import Pipeline
+    from ...estimator.holistic.main import HolisticEstimator, HolisticPoseEstimator, HolisticPartEstimator
 
     holistic = global_args.holistic
     pose = global_args.pose

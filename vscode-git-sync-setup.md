@@ -49,8 +49,11 @@
         {
             "label": "Git: Sync with remote",
             "type": "shell",
-            "command": "git",
-            "args": ["pull", "origin", "${git.branch}"],
+            "command": "pwsh.exe",
+            "args": [
+                "-Command",
+                "$branch = git branch --show-current; $remote = @(git remote)[0]; if ($remote) { git pull $remote $branch; Write-Host 'Synced $branch with $remote' } else { Write-Host 'No remote found' -ForegroundColor Red }"
+            ],
             "group": "build",
             "presentation": {
                 "echo": true,
@@ -65,8 +68,11 @@
         {
             "label": "Git: Push to remote",
             "type": "shell",
-            "command": "git",
-            "args": ["push", "origin", "${git.branch}"],
+            "command": "pwsh.exe",
+            "args": [
+                "-Command",
+                "$branch = git branch --show-current; $remote = @(git remote)[0]; if ($remote) { git push $remote $branch; Write-Host 'Pushed $branch to $remote' } else { Write-Host 'No remote found' -ForegroundColor Red }"
+            ],
             "group": "build",
             "presentation": {
                 "echo": true,
@@ -84,8 +90,16 @@
 
 #### タスクの説明
 
-- **Git: Sync with remote**: 現在のブランチをリモートブランチから同期（プル）
-- **Git: Push to remote**: 現在のブランチをリモートブランチにプッシュ
+- **Git: Sync with remote**: 現在のブランチをリモートブランチから同期（プル）- リモート名を自動検出
+- **Git: Push to remote**: 現在のブランチをリモートブランチにプッシュ - リモート名を自動検出
+- **Git: Work branch auto commit and push**: work/*ブランチでの自動コミット＆プッシュ
+
+#### 🔧 リモート名の自動検出機能
+
+全てのタスクで`origin`ではなく、実際に設定されているリモート名を自動検出します：
+- 現在のプロジェクトでは`plumiume`リモートが自動検出される
+- 複数のリモートがある場合は最初のリモートを使用
+- リモートが見つからない場合はエラーメッセージを表示
 
 ### 3. `.vscode/keybindings.json` の新規作成
 
@@ -224,3 +238,45 @@ WIP: Auto-save 2025-10-08 14:30:15
 
 ### 設定の無効化
 設定を無効にしたい場合は、`settings.json`から該当する設定項目を削除するか、値を`false`に変更してください。
+
+## Python仮想環境の自動アクティベーション設定
+
+### 追加された設定項目
+
+| 設定項目 | 値 | 説明 |
+|---------|---|------|
+| `python.terminal.activateEnvironment` | `true` | ターミナルで仮想環境を自動アクティベート |
+| `python.terminal.activateEnvInCurrentTerminal` | `true` | 現在のターミナルでもアクティベート |
+| `terminal.integrated.defaultProfile.windows` | `"PowerShell"` | デフォルトターミナルプロファイル |
+| `terminal.integrated.profiles.windows` | カスタム設定 | 仮想環境を自動でアクティベートするPowerShellプロファイル |
+
+### 追加されたタスク
+
+- **Python: Setup Virtual Environment** - 仮想環境を作成（uvを使用）
+- **Python: Show Virtual Environment Info** - 仮想環境情報を表示
+- **Python: Activate Virtual Environment** - 新しいターミナルで仮想環境をアクティベート
+
+### 追加されたキーバインド
+
+| キーバインド | 動作 |
+|-------------|------|
+| `Ctrl+Shift+P, Ctrl+Shift+A` | 仮想環境をアクティベート |
+
+### 仮想環境の場所
+
+- **パス**: `D:/Users/ikeko/PythonVenvs/LMPipe/cp312`
+- **理由**: OneDriveの同期を避けるため
+- **構造**: プロジェクト名/Pythonバージョンで整理
+
+### 手動アクティベーション方法
+
+```powershell
+# PowerShellで直接アクティベート
+& 'D:/Users/ikeko/PythonVenvs/LMPipe/cp312/Scripts/Activate.ps1'
+
+# 新しいPowerShellウィンドウでアクティベート
+pwsh -NoExit -Command "& 'D:/Users/ikeko/PythonVenvs/LMPipe/cp312/Scripts/Activate.ps1'"
+
+# スクリプト経由でアクティベーション情報表示
+.vscode\setup-venv.ps1 -Action activate
+```
