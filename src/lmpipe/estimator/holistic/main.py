@@ -4,7 +4,7 @@ from numpy.typing import NDArray
 import numpy as np
 from cv2.typing import MatLike
 
-from .. import Estimator, headers, estimate
+from .. import Estimator, headers, estimate, annotate
 
 from .args import HolisticArgs
 
@@ -141,7 +141,7 @@ class HolisticEstimator(Estimator):
         return np.concatenate(headers_list, 0)
 
     @estimate
-    def estimate(self, frame_src: MatLike, frame_idx: int):
+    def estimate(self, frame_src: MatLike, frame_idx: int) -> NDArrayFloat | None:
 
         targets = [
             (self.left_hand_estimator, self.pose_estimator.left_hand_clipfn),
@@ -185,3 +185,46 @@ class HolisticEstimator(Estimator):
         ret_landmarks = np.concatenate(ret_landmarks, 0)
 
         return ret_landmarks[:, :self.holistic_args.dimensions - 1]
+
+    @annotate
+    def annotate( # pyright: ignore[reportIncompatibleVariableOverride]
+        self,
+        frame_src: MatLike,
+        frame_idx: int,
+        landmarks: NDArrayFloat
+        ) -> MatLike | None:
+
+        shapes = self._get_shapes()
+
+        offsets = {
+            'pose': (t := 0),
+            'left_hand': (t := t + shapes['pose'][0]),
+            'right_hand': (t := t + shapes['left_hand'][0]),
+            'face': (t := t + shapes['right_hand'][0]),
+            'holistic': t + shapes['face'][0]
+        }
+
+        frame = self.pose_estimator.annotate(
+            frame_src, frame_idx,
+            landmarks[offsets['pose']:offsets['left_hand']]
+        )
+
+        if self.left_hand_estimator is not None:
+            self.left_hand_estimator.annotate(
+                frame, frame_idx,
+                landmarks[offsets['left_hand']:offsets['right_hand']]
+            )
+
+        if self.right_hand_estimator is not None:
+            self.right_hand_estimator.annotate(
+                frame, frame_idx,
+                landmarks[offsets['right_hand']:offsets['face']]
+            )
+
+        if self.face_estimator is not None:
+            self.face_estimator.annotate(
+                frame, frame_idx,
+                landmarks[offsets['face']:offsets['holistic']]
+            )
+
+        return frame
