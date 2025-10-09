@@ -1,6 +1,6 @@
 from typing import Unpack, Iterator, Callable, Concatenate, Self
 from itertools import repeat, count
-from functools import partial
+from functools import wraps
 from pathlib import Path
 from uuid import uuid4, UUID
 from threading import local
@@ -39,6 +39,11 @@ from .collector.landmarks_matrix_writer import (
     CsvLandmarksMatrixWriter,
     JsonLandmarksMatrixWriter
 )
+
+loky_shutdown = ProcessPoolExecutor.shutdown
+def overridden_loky_shutdown(self: ProcessPoolExecutor, wait: bool = True, *, cancel_futures: bool = False) -> None:
+    return loky_shutdown(self, wait=wait, kill_workers=cancel_futures)
+ProcessPoolExecutor.shutdown = overridden_loky_shutdown # pyright: ignore[reportAttributeAccessIssue]
 
 class _Local(local):
     def __init__(self):
@@ -93,9 +98,27 @@ class Pipeline:
             **options
         }
 
+    @staticmethod
+    def _public_api[S: 'Pipeline', **P, R](
+        func: Callable[Concatenate[S, P], R]
+        ) -> Callable[Concatenate[S, P], R]:
+        
+        @wraps(func)
+        def wrapper(self: S, *args: P.args, **kwargs: P.kwargs) -> R:
+            try:
+                return func(self, *args, **kwargs)
+            except KeyboardInterrupt:
+                if self._sample_executor is not None:
+                    self._sample_executor.shutdown(wait=False, cancel_futures=True)
+                if self._batch_executor is not None:
+                    self._batch_executor.shutdown(wait=False, cancel_futures=True)
+                raise
+
+        return wrapper
 
     ## Public Methods
 
+    @_public_api
     def run(self, src: PathLike, dst: PathLike, **options: Unpack[LMPipeOptionsPartial]):
         """Run the pipeline on the given source and destination.
         
@@ -123,6 +146,7 @@ class Pipeline:
             raise FileNotFoundError(f"Source path '{src_path}' does not exist.")
         raise ValueError(f"Source path '{src_path}' is neither a file nor a directory.")
 
+    @_public_api
     def run_batch(self, src: PathLike, dst: PathLike, **options: Unpack[LMPipeOptionsPartial]):
         """Process multiple files in a directory in batch mode.
         
@@ -146,6 +170,7 @@ class Pipeline:
             f"Source path '{src_path}' is not a directory."
         )
 
+    @_public_api
     def run_sample(self, src: PathLike, dst: PathLike, **options: Unpack[LMPipeOptionsPartial]):
         """Process a single file sample.
         
@@ -169,6 +194,7 @@ class Pipeline:
             f"Source path '{src_path}' is not a file."
         )
 
+    @_public_api
     def run_video(self, src: PathLike, dst: PathLike, **options: Unpack[LMPipeOptionsPartial]):
         """Process a video file.
         
@@ -192,6 +218,7 @@ class Pipeline:
             f"Source path '{src_path}' is not a video file."
         )
 
+    @_public_api
     def run_image_sequence(self, src: PathLike, dst: PathLike, **options: Unpack[LMPipeOptionsPartial]):
         """Process an image sequence directory.
         
@@ -215,6 +242,7 @@ class Pipeline:
             f"Source path '{src_path}' is not an image sequence directory."
         )
 
+    @_public_api
     def run_image(self, src: PathLike, dst: PathLike, **options: Unpack[LMPipeOptionsPartial]):
         """Process a single image file.
         
@@ -238,6 +266,7 @@ class Pipeline:
             f"Source path '{src_path}' is not an image file."
         )
 
+    @_public_api
     def run_stream(self, src: int, dst: PathLike, **options: Unpack[LMPipeOptionsPartial]):
         """Process a camera stream or other video input device.
         
@@ -263,8 +292,18 @@ class Pipeline:
 
         batch_executor = self._get_batch_executor(options)
 
+        # run_sample = self._with_ignore_exceptions(
+        #     self._with_thread_local(
+        #         self.__class__._run_sample
+        #     )
+        # )
+
+        run_sample = self._with_thread_local(
+            self.__class__._run_sample
+        )
+
         batch_map = batch_executor.map(
-            self._with_thread_local(self.main_id, self.__class__._run_sample),
+            run_sample,
             self._src_dst_generator(src_dst),
             repeat(options)
         )
@@ -282,13 +321,17 @@ class Pipeline:
         if is_image_file(src_dst[0]):
             return self._run_image(src_dst, options)
 
-        raise ValueError
+        raise ValueError(
+            f"Source path '{src_dst[0]}' is not a valid sample file or directory."
+        )
 
     def _run_video(self, src_dst: SrcDst, options: LMPipeOptions):
 
         capture = cv2.VideoCapture(str(src_dst[0]))
         if not capture.isOpened():
-            raise ValueError
+            raise ValueError(
+                f"Failed to open video file '{src_dst[0]}'."
+            )
 
         executor = self._get_sample_executor(options)
 
@@ -332,7 +375,9 @@ class Pipeline:
 
         capture = cv2.VideoCapture(src)
         if not capture.isOpened():
-            raise ValueError
+            raise ValueError(
+                f"Failed to open video stream #{src}."
+            )
 
         executor = self._get_sample_executor(options)
 
@@ -355,8 +400,10 @@ class Pipeline:
         options: LMPipeOptions
         ):
 
+        process_frame = self._with_thread_local(self.__class__._process_frame)
+
         return executor.map(
-            self._with_thread_local(self.main_id, self.__class__._process_frame),
+            process_frame,
             frames,
             count(),
             repeat(uuid4())
@@ -369,8 +416,10 @@ class Pipeline:
         options: LMPipeOptions
         ):
 
+        process_frame = self._with_thread_local(self.__class__._process_frame)
+
         return executor.submit(
-            self._with_thread_local(self.main_id, self.__class__._process_frame),
+            process_frame,
             frame,
             1,
             uuid4()
@@ -424,12 +473,13 @@ class Pipeline:
             self._get_annotated_frames_writer(dst, options)
         ]
 
-        for result in sample_iter:
+        for ret in sample_iter:
+
             # TODO: call all workers' on_after_estimate after the last frame
             # currently only the main thread's estimator is called
             self.estimator.on_after_estimate(object())
             for collector in collectors:
-                collector.collect(result)
+                collector.collect(ret)
 
         for collector in collectors:
             collector.close()
@@ -582,22 +632,50 @@ class Pipeline:
     def _sample_executor_initializer(self):
         _local.wv_pipelines.setdefault(self.main_id, self)
 
-    @classmethod
+
+    class _with_ignore_exceptions[**P, R]:
+        def __init__(self, func: Callable[P, R]):
+            self.func = func
+        def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R | None:
+            try:
+                return self.func(*args, **kwargs)
+            except Exception:
+                return None
+
     def _with_thread_local[**P, R](
-        cls,
-        main_id: int,
-        func: Callable[Concatenate[Self, P], R],
-        ) -> Callable[P, R]:
+        self,
+        func: Callable[Concatenate[Self, P], R]
+        ):
+        return self._ThreadLocalMethod(
+            cls=self.__class__, main_id=self.main_id, func=func
+        )
 
-        self = _local.wv_pipelines.get(main_id, None)
+    class _ThreadLocalMethod[S: 'Pipeline', **P, R]:
 
-        if self is None:
-            raise RuntimeError("Pipeline instance not found in thread local storage.")
+        def __init__(
+            self,
+            cls: type[S],
+            main_id: int,
+            func: Callable[Concatenate[S, P], R],
+            ):
 
-        if not isinstance(self, cls) or self.main_id != main_id:
-            raise RuntimeError("Pipeline instance mismatch.")
+            self.cls = cls # not need to serialize
+            self.main_id = main_id # lightweight for serialize
+            self.func = func # not need to serialize
 
-        return partial(func, self)
+        def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
+
+            pipeline = _local.wv_pipelines.get(self.main_id, None)
+
+            if pipeline is None:
+                raise RuntimeError("Pipeline instance not found in thread local storage.")
+
+            if not isinstance(pipeline, self.cls) or pipeline.main_id != self.main_id:
+                raise RuntimeError("Pipeline instance mismatch.")
+
+            self.pipeline = pipeline
+
+            return self.func(self.pipeline, *args, **kwargs)
 
     ### iterators
 

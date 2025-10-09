@@ -3,14 +3,22 @@ from typing import TypedDict, Literal
 import cv2
 from clipar import group, mixin
 
-from .collector.landmarks_matrix_writer import FormatLiteral as LMWFormatLiteral
+from .collector.landmarks_matrix_writer import (
+    FormatLiteral as LMWFormatLiteral,
+    ModeLiteral as LMWModeLiteral
+)
 from .collector.annotated_frames_viewer import FormatLiteral as AFVFormatLiteral
-from .collector.annotated_frames_writer import FormatLiteral as AFWFormatLiteral
+from .collector.annotated_frames_writer import (
+    FormatLiteral as AFWFormatLiteral,
+    ModeLiteral as AFWModeLiteral
+)
 
 class OutputOptions(TypedDict):
     landmarks_matrix_save_format: LMWFormatLiteral
+    landmarks_matrix_save_mode: LMWModeLiteral
     annotated_frames_show_format: AFVFormatLiteral
     annotated_frames_save_format: AFWFormatLiteral
+    annotated_frames_save_mode: AFWModeLiteral
     annotated_frames_save_width: int
     annotated_frames_save_height: int
     annotated_frames_save_fps: float
@@ -19,8 +27,10 @@ class OutputOptions(TypedDict):
 
 class OutputOptionsPartial(TypedDict, total=False):
     landmarks_matrix_save_format: LMWFormatLiteral
+    landmarks_matrix_save_mode: LMWModeLiteral
     annotated_frames_show_format: AFVFormatLiteral
     annotated_frames_save_format: AFWFormatLiteral
+    annotated_frames_save_mode: AFWModeLiteral
     annotated_frames_save_width: int
     annotated_frames_save_height: int
     annotated_frames_save_fps: float
@@ -30,10 +40,14 @@ class OutputOptionsPartial(TypedDict, total=False):
 class OutputOptionsGroup(mixin.ReprMixin):
     landmarks_matrix_save_format: LMWFormatLiteral = None
     'format to save landmarks matrix, default is None'
+    landmarks_matrix_save_mode: LMWModeLiteral = 'skip'
+    'mode to save landmarks matrix, default is "skip"'
     annotated_frames_show_format: AFVFormatLiteral = None
     'format to show annotated frames, default is None'
     annotated_frames_save_format: AFWFormatLiteral = None
     'format to save annotated frames, default is None'
+    annotated_frames_save_mode: AFWModeLiteral = 'skip'
+    'mode to save annotated frames, default is "skip"'
     annotated_frames_save_width: int = 640
     'width to save annotated frames'
     annotated_frames_save_height: int = 480
@@ -47,8 +61,10 @@ class OutputOptionsGroup(mixin.ReprMixin):
 
 DEFAULT_OUTPUT_OPTIONS: OutputOptions = {
     'landmarks_matrix_save_format': None,
+    'landmarks_matrix_save_mode': 'skip',
     'annotated_frames_show_format': None,
     'annotated_frames_save_format': None,
+    'annotated_frames_save_mode': 'skip',
     'annotated_frames_save_width': 640,
     'annotated_frames_save_height': 480,
     'annotated_frames_save_fps': 30.0,

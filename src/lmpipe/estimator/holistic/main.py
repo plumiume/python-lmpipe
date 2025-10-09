@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from itertools import pairwise
 from functools import cache
 from numpy.typing import NDArray
 import numpy as np
@@ -58,10 +57,10 @@ class HolisticEstimator(Estimator):
 
         self.holistic_args = holistic_args
 
-        self.pose_estimator = pose_estimator
-        self.left_hand_estimator = left_hand_estimator
-        self.right_hand_estimator = right_hand_estimator
-        self.face_estimator = face_estimator
+        self.pose_estimator: HolisticPoseEstimator = pose_estimator
+        self.left_hand_estimator: HolisticPartEstimator | None = left_hand_estimator
+        self.right_hand_estimator: HolisticPartEstimator | None = right_hand_estimator
+        self.face_estimator: HolisticPartEstimator | None = face_estimator
 
     def setup(self):
 
@@ -144,10 +143,6 @@ class HolisticEstimator(Estimator):
     @estimate
     def estimate(self, frame_src: MatLike, frame_idx: int):
 
-        cumsum_shapes = np.cumsum(
-            np.array(self._get_shapes().values())
-        )
-
         targets = [
             (self.left_hand_estimator, self.pose_estimator.left_hand_clipfn),
             (self.right_hand_estimator, self.pose_estimator.right_hand_clipfn),
@@ -157,14 +152,15 @@ class HolisticEstimator(Estimator):
         pose_landmarks = self.pose_estimator.estimate(frame_src, frame_idx)
         ret_landmarks = [pose_landmarks]
 
-        for (estimator, clipfn), (begin, end) in zip(targets, pairwise(cumsum_shapes)):
+        for estimator, clipfn in targets:
 
             if estimator is None:
                 continue
 
             image_slices = clipfn(
-                frame_src, frame_idx,
-                pose_landmarks[begin[0]:end[0]]
+                frame_src=frame_src,
+                idx=frame_idx,
+                landmarks=pose_landmarks
             )
 
             if image_slices is None:

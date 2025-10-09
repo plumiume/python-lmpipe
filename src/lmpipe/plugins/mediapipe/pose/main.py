@@ -121,8 +121,8 @@ class MediaPipePoseEstimator(MediaPipeEstimator, HolisticPoseEstimator):
 
         center = (wrist + thumb + index + pinky) / 4
 
-        d1 = np.linalg.norm(wrist - thumb)
-        d2 = np.linalg.norm(wrist - index)
+        d1 = np.abs(wrist - thumb)
+        d2 = np.abs(wrist - index)
         d_max = np.max([d1, d2], axis=0)
 
         try:
@@ -161,8 +161,8 @@ class MediaPipePoseEstimator(MediaPipeEstimator, HolisticPoseEstimator):
 
         center = (wrist + thumb + index + pinky) / 4
 
-        d1 = np.linalg.norm(wrist - thumb)
-        d2 = np.linalg.norm(wrist - index)
+        d1 = np.abs(wrist - thumb)
+        d2 = np.abs(wrist - index)
         d_max = np.max([d1, d2], axis=0)
 
         try:

@@ -42,4 +42,6 @@ dev = [
     "ipykernel[colorama]>=6.30.1",
     "ipython>=9.5.0",
     "loky>=3.5.6",
+    "types-html5lib>=1.1.11.20250917",
+    "types-requests>=2.32.4.20250913",
 ]

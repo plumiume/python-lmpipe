@@ -9,6 +9,9 @@ from .base import BaseCollector, ProcessFrameResult, NDArrayFloat, NDArrayStr
 FormatLiteral = Literal['.npy', '.csv', '.json'] | None
 Formats: tuple[FormatLiteral, ...] = ('.npy', '.csv', '.json', None)
 
+ModeLiteral = Literal['skip', 'overwrite', 'postfix']
+Modes: tuple[ModeLiteral, ...] = ('skip', 'overwrite', 'postfix')
+
 class LandmarksMatrixWriter(BaseCollector, ABC):
 
     def collect(self, result: ProcessFrameResult):

@@ -11,6 +11,9 @@ from .base import BaseCollector, ProcessFrameResult
 FormatLiteral = Literal['cv2'] | None
 Formats: tuple[FormatLiteral, ...] = ('cv2', None)
 
+ModeLiteral = Literal['skip', 'overwrite', 'postfix']
+Modes: tuple[ModeLiteral, ...] = ('skip', 'overwrite', 'postfix')
+
 class AnnotatedFramesWriter(BaseCollector, ABC):
 
     def collect(self, result: ProcessFrameResult):
