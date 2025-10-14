@@ -113,8 +113,6 @@ class WorkerInterface[ToWorker, ToExecutor]:
 
 class ExecutorNetwork[ToWorker, ToExecutor]:
 
-    _worker_listener_thread: Thread | None = None
-
     def __getstate__(self) -> dict[str, Any]:
         return {
             **self.__dict__,
