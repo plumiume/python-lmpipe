@@ -2,8 +2,7 @@ from typing import Unpack, Iterator, Callable, Concatenate, Self
 from itertools import repeat, count
 from functools import wraps
 from pathlib import Path
-from uuid import uuid4, UUID
-from threading import local
+from threading import local, get_ident
 from multiprocessing import cpu_count
 from concurrent.futures import Executor, Future
 from loky import ProcessPoolExecutor # pyright: ignore[reportMissingTypeStubs]
@@ -12,27 +11,27 @@ from weakref import WeakValueDictionary
 import cv2
 from cv2.typing import MatLike
 
-from .utils import (
+from ..utils import (
     PathLike, SrcDst,
     is_video_file, is_image_file, is_image_sequence_dir,
     video_capture_frame_generator, image_sequence_frame_generator
 )
-from .options import LMPipeOptions, LMPipeOptionsPartial, DEFAULT_LMPIPE_OPTIONS
-from .estimator import Estimator
-from .executor import DummyExecutor, WorkerNetworkQueue
+from ..options import LMPipeOptions, LMPipeOptionsPartial, DEFAULT_LMPIPE_OPTIONS
+from ..estimator import Estimator
+from ..executor import DummyExecutor
 
-from .collector.base import BaseCollector, ProcessFrameResult
-from .collector.annotated_frames_viewer import (
+from ..collector.base import BaseCollector, ProcessFrameResult
+from ..collector.annotated_frames_viewer import (
     AnnotatedFramesViewer,
     DummyAnnotatedFramesViewer,
     Cv2AnnotatedFramesViewer
 )
-from .collector.annotated_frames_writer import (
+from ..collector.annotated_frames_writer import (
     AnnotatedFramesWriter,
     DummyAnnotatedFramesWriter,
     Cv2AnnotatedFramesWriter
 )
-from .collector.landmarks_matrix_writer import (
+from ..collector.landmarks_matrix_writer import (
     LandmarksMatrixWriter,
     DummyLandmarksMatrixWriter,
     NpyLandmarksMatrixWriter,
@@ -50,9 +49,9 @@ class _Local(local):
         self.wv_pipelines: WeakValueDictionary[int, "Pipeline"] = WeakValueDictionary()
         "id(main_thread)->pipeline(current_thread)"
 
-_local = _Local()
-
 def dummy(*args: object, **kwargs: object): pass
+
+_local = _Local()
 
 type _Item = object
 
@@ -60,16 +59,19 @@ class Pipeline:
 
     ## Serialize
 
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        # Remove unpicklable entries
-        state['_batch_executor'] = None
-        state['_sample_executor'] = None
-        state['_worker_network_queue'] = None
-        return state
+    def __getstate__(self) -> dict[str, object]:
+        return {
+            **self.__dict__,
+            '_batch_executor': None,
+            '_sample_executor': None,
+            '_sample_id_header': None
+        }
 
     def __setstate__(self, state: dict[str, object]):
+
         self.__dict__.update(state)
+
+        self._estimator_setup = self.estimator.setup
 
     ## Constructor
 
@@ -81,13 +83,14 @@ class Pipeline:
         """Initialize the Pipeline with an estimator and options.
         
         Args:
-            estimator: The estimator to use for processing
-            **options: Additional LMPipe options to override defaults
+            estimator (Estimator): The estimator to use for processing.
+            **options: Additional LMPipe options to override defaults.
         """
 
-        self.main_id = id(self)
-        self.current_uuid = uuid4()
-        _local.wv_pipelines[self.main_id] = self
+        _local.wv_pipelines[self._main_id] = self
+
+        self._main_id = id(self)
+        self._current_sample_id = -1
 
         self.estimator = estimator
         self._estimator_setup = estimator.setup
@@ -122,18 +125,20 @@ class Pipeline:
     def run(self, src: PathLike, dst: PathLike, **options: Unpack[LMPipeOptionsPartial]):
         """Run the pipeline on the given source and destination.
         
-        Automatically detects the input type (file or directory) and runs the appropriate processing method.
+        Automatically detects the input type (file or directory) and runs the 
+        appropriate processing method.
         
         Args:
-            src: Source path (file or directory)
-            dst: Destination path
-            **options: Additional LMPipe options to override defaults
-            
+            src (PathLike): Source path (file or directory).
+            dst (PathLike): Destination path.
+            **options: Additional LMPipe options to override defaults.
+
         Returns:
-            The result of the processing operation
-            
+            The result of the processing operation.
+
         Raises:
-            ValueError: If the source path is neither a file nor a directory
+            FileNotFoundError: If the source path does not exist.
+            ValueError: If the source path is neither a file nor a directory.
         """
         src_path, dst_path, options_ = self._prepare_run(src, dst, options)
 
@@ -151,15 +156,15 @@ class Pipeline:
         """Process multiple files in a directory in batch mode.
         
         Args:
-            src: Source directory path
-            dst: Destination directory path
-            **options: Additional LMPipe options to override defaults
-            
+            src (PathLike): Source directory path.
+            dst (PathLike): Destination directory path.
+            **options: Additional LMPipe options to override defaults.
+
         Returns:
-            The result of the batch processing operation
-            
+            The result of the batch processing operation.
+
         Raises:
-            ValueError: If the source path is not a directory
+            ValueError: If the source path is not a directory.
         """
         src_path, dst_path, options_ = self._prepare_run(src, dst, options)
 
@@ -175,15 +180,15 @@ class Pipeline:
         """Process a single file sample.
         
         Args:
-            src: Source file path
-            dst: Destination path
-            **options: Additional LMPipe options to override defaults
-            
+            src (PathLike): Source file path.
+            dst (PathLike): Destination path.
+            **options: Additional LMPipe options to override defaults.
+
         Returns:
-            The result of the sample processing operation
-            
+            The result of the sample processing operation.
+
         Raises:
-            ValueError: If the source path is not a file
+            ValueError: If the source path is not a file.
         """
         src_path, dst_path, options_ = self._prepare_run(src, dst, options)
 
@@ -199,15 +204,15 @@ class Pipeline:
         """Process a video file.
         
         Args:
-            src: Source video file path
-            dst: Destination path
-            **options: Additional LMPipe options to override defaults
-            
+            src (PathLike): Source video file path.
+            dst (PathLike): Destination path.
+            **options: Additional LMPipe options to override defaults.
+
         Returns:
-            The result of the video processing operation
+            The result of the video processing operation.
             
         Raises:
-            ValueError: If the source path is not a video file
+            ValueError: If the source path is not a video file.
         """
         src_path, dst_path, options_ = self._prepare_run(src, dst, options)
 
@@ -223,15 +228,15 @@ class Pipeline:
         """Process an image sequence directory.
         
         Args:
-            src: Source directory containing image sequence
-            dst: Destination path
-            **options: Additional LMPipe options to override defaults
-            
+            src (PathLike): Source directory containing image sequence.
+            dst (PathLike): Destination path.
+            **options: Additional LMPipe options to override defaults.
+
         Returns:
-            The result of the image sequence processing operation
+            The result of the image sequence processing operation.
             
         Raises:
-            ValueError: If the source path is not an image sequence directory
+            ValueError: If the source path is not an image sequence directory.
         """
         src_path, dst_path, options_ = self._prepare_run(src, dst, options)
 
@@ -247,15 +252,15 @@ class Pipeline:
         """Process a single image file.
         
         Args:
-            src: Source image file path
-            dst: Destination path
-            **options: Additional LMPipe options to override defaults
-            
+            src (PathLike): Source image file path.
+            dst (PathLike): Destination path.
+            **options: Additional LMPipe options to override defaults.
+
         Returns:
-            The result of the image processing operation
+            The result of the image processing operation.
             
         Raises:
-            ValueError: If the source path is not an image file
+            ValueError: If the source path is not an image file.
         """
         src_path, dst_path, options_ = self._prepare_run(src, dst, options)
 
@@ -271,12 +276,12 @@ class Pipeline:
         """Process a camera stream or other video input device.
         
         Args:
-            src: Camera index or device ID (typically 0 for default camera)
-            dst: Destination path for output
-            **options: Additional LMPipe options to override defaults
-            
+            src (int): Camera index or device ID (typically 0 for default camera).
+            dst (PathLike): Destination path for output.
+            **options: Additional LMPipe options to override defaults.
+
         Returns:
-            The result of the stream processing operation
+            The result of the stream processing operation.
         """
         dst_path = Path(dst)
         options_: LMPipeOptions = {**self.lmpipe_options, **options}
@@ -292,14 +297,11 @@ class Pipeline:
 
         batch_executor = self._get_batch_executor(options)
 
-        # run_sample = self._with_ignore_exceptions(
-        #     self._with_thread_local(
-        #         self.__class__._run_sample
-        #     )
-        # )
-
-        run_sample = self._with_thread_local(
-            self.__class__._run_sample
+        run_sample = self._with_handle_exceptions(
+            self._with_thread_local(
+                self.__class__._run_sample
+            ),
+            handler=lambda ex: None
         )
 
         batch_map = batch_executor.map(
@@ -310,22 +312,22 @@ class Pipeline:
 
         batch_iter = self._get_batch_iterator(batch_map)
 
-        for _ in batch_iter: pass
+        self._collect_batch_iter(batch_iter, options)
 
-    def _run_sample(self, src_dst: SrcDst, options: LMPipeOptions):
+    def _run_sample(self, src_dst: SrcDst, options: LMPipeOptions, sample_idx: int = 0):
 
         if is_video_file(src_dst[0]):
-            return self._run_video(src_dst, options)
+            return self._run_video(src_dst, options, sample_idx=sample_idx)
         if is_image_sequence_dir(src_dst[0]):
-            return self._run_image_sequence(src_dst, options)
+            return self._run_image_sequence(src_dst, options, sample_idx=sample_idx)
         if is_image_file(src_dst[0]):
-            return self._run_image(src_dst, options)
+            return self._run_image(src_dst, options, sample_idx=sample_idx)
 
         raise ValueError(
             f"Source path '{src_dst[0]}' is not a valid sample file or directory."
         )
 
-    def _run_video(self, src_dst: SrcDst, options: LMPipeOptions):
+    def _run_video(self, src_dst: SrcDst, options: LMPipeOptions, sample_idx: int = 0):
 
         capture = cv2.VideoCapture(str(src_dst[0]))
         if not capture.isOpened():
@@ -338,40 +340,43 @@ class Pipeline:
         sample_map = self._process_sample(
             frames=video_capture_frame_generator(capture),
             executor=executor,
-            options=options
+            options=options,
+            sample_idx=sample_idx
         )
 
         sample_iter = self._get_sample_iterator(sample_map)
 
         self._collect_sample_iter(sample_iter, src_dst[1], options)
 
-    def _run_image_sequence(self, src_dst: SrcDst, options: LMPipeOptions):
+    def _run_image_sequence(self, src_dst: SrcDst, options: LMPipeOptions, sample_idx: int = 0):
 
         executor = self._get_sample_executor(options)
 
         sample_map = self._process_sample(
             frames=image_sequence_frame_generator(src_dst[0]),
             executor=executor,
-            options=options
+            options=options,
+            sample_idx=sample_idx
         )
 
         sample_iter = self._get_sample_iterator(sample_map)
 
         self._collect_sample_iter(sample_iter, src_dst[1], options)
 
-    def _run_image(self, src_dst: SrcDst, options: LMPipeOptions):
+    def _run_image(self, src_dst: SrcDst, options: LMPipeOptions, sample_idx: int = 0):
 
         executor = self._get_sample_executor(options)
 
         sample_ftr = self._process_image(
             frame=cv2.imread(str(src_dst[0])),
             executor=executor,
-            options=options
+            options=options,
+            sample_idx=sample_idx
         )
 
         self._collect_sample_ftr(sample_ftr, src_dst[1], options)
 
-    def _run_stream(self, src: int, dst: Path, options: LMPipeOptions):
+    def _run_stream(self, src: int, dst: Path, options: LMPipeOptions, sample_idx: int = 0):
 
         capture = cv2.VideoCapture(src)
         if not capture.isOpened():
@@ -384,7 +389,8 @@ class Pipeline:
         sample_map = self._process_sample(
             frames=video_capture_frame_generator(capture),
             executor=executor,
-            options=options
+            options=options,
+            sample_idx=sample_idx
         )
 
         sample_iter = self._get_sample_iterator(sample_map)
@@ -397,8 +403,9 @@ class Pipeline:
         self,
         frames: Iterator[MatLike | None],
         executor: Executor,
-        options: LMPipeOptions
-        ):
+        options: LMPipeOptions,
+        sample_idx: int
+        ) -> Iterator[ProcessFrameResult]:
 
         process_frame = self._with_thread_local(self.__class__._process_frame)
 
@@ -406,15 +413,16 @@ class Pipeline:
             process_frame,
             frames,
             count(),
-            repeat(uuid4())
+            repeat(sample_idx)
         )
 
     def _process_image(
         self,
         frame: MatLike | None,
         executor: Executor,
-        options: LMPipeOptions
-        ):
+        options: LMPipeOptions,
+        sample_idx: int
+        ) -> Future[ProcessFrameResult]:
 
         process_frame = self._with_thread_local(self.__class__._process_frame)
 
@@ -422,33 +430,34 @@ class Pipeline:
             process_frame,
             frame,
             1,
-            uuid4()
+            sample_idx
         )
 
 
     ### estimator handler
 
-    def _process_frame(self, frame: MatLike | None, idx: int, uuid: UUID) -> ProcessFrameResult:
+    def _process_frame(self, frame_src: MatLike | None, frame_idx: int, sample_idx: int) -> ProcessFrameResult:
 
         self._estimator_setup()
         self._estimator_setup = dummy
 
-        if self.current_uuid != uuid:
-            self.uuid = uuid
+        if self._current_sample_id != sample_idx:
+            self._current_sample_id = sample_idx
             self.estimator.on_before_estimate(object())
 
-        landmarks = self.estimator.estimate(frame, idx)
+        landmarks = self.estimator.estimate(frame_src, frame_idx)
 
-        if frame is None:
-            annotated_frame = frame
+        if frame_src is None:
+            annotated_frame = frame_src
         else:
-            annotated_frame = self.estimator.annotate(frame, idx, landmarks)
+            annotated_frame = self.estimator.annotate(frame_src, frame_idx, landmarks)
 
         return ProcessFrameResult(
-            frame_idx=idx,
+            frame_idx=frame_idx,
             headers=self.estimator.headers,
             landmarks=landmarks,
-            annotated_frame=annotated_frame
+            annotated_frame=annotated_frame,
+            thread_ident=get_ident()
         )
 
 
@@ -462,6 +471,12 @@ class Pipeline:
 
         return src_path, dst_path, options_
 
+    ### collectors
+
+    def _collect_batch_iter(self, batch_iter: Iterator[None], options: LMPipeOptions):
+        # TODO: implement batch result collection
+        for _ in batch_iter: pass
+
     def _collect_sample_iter(self, sample_iter: Iterator[ProcessFrameResult], dst: Path, options: LMPipeOptions):
 
         if '{task}' not in str(dst):
@@ -473,16 +488,20 @@ class Pipeline:
             self._get_annotated_frames_writer(dst, options)
         ]
 
+        for cllctr in collectors:
+            if cllctr.skip_process:
+                return # skip if any collector is set to skip
+
         for ret in sample_iter:
+            for cllctr in collectors:
+                cllctr.collect(ret)
 
-            # TODO: call all workers' on_after_estimate after the last frame
-            # currently only the main thread's estimator is called
-            self.estimator.on_after_estimate(object())
-            for collector in collectors:
-                collector.collect(ret)
+        # TODO: call all workers' on_after_estimate after the last frame
+        # currently only the main thread's estimator is called
+        self.estimator.on_after_estimate(object())
 
-        for collector in collectors:
-            collector.close()
+        for cllctr in collectors:
+            cllctr.close()
 
     def _collect_sample_ftr(self, sample_ftr: Future[ProcessFrameResult], dst: Path, options: LMPipeOptions):
 
@@ -494,14 +513,26 @@ class Pipeline:
             self._get_annotated_frames_viewer(options),
             self._get_annotated_frames_writer(dst, options)
         ]
+        max_postfix_count = max(
+            cllctr.postfix_count for cllctr in collectors
+        )
+
+        for cllctr in collectors:
+            if cllctr.skip_process:
+                return # skip if any collector is set to skip
+            cllctr.apply_postfix(max_postfix_count)
 
         result = sample_ftr.result()
 
-        for collector in collectors:
-            collector.collect(result)
+        for cllctr in collectors:
+            cllctr.collect(result)
 
-        for collector in collectors:
-            collector.close()
+        # TODO: call all workers' on_after_estimate after the last frame
+        # currently only the main thread's estimator is called
+        self.estimator.on_after_estimate(object())
+
+        for cllctr in collectors:
+            cllctr.close()
 
     def _get_landmarks_matrix_writer(self, dst: Path, options: LMPipeOptions) -> LandmarksMatrixWriter:
 
@@ -510,13 +541,13 @@ class Pipeline:
 
         match options['landmarks_matrix_save_format']:
             case None:
-                landmarks_matrix_writer = DummyLandmarksMatrixWriter()
+                landmarks_matrix_writer = DummyLandmarksMatrixWriter(options)
             case '.npy':
-                landmarks_matrix_writer = NpyLandmarksMatrixWriter(formatted_dst)
+                landmarks_matrix_writer = NpyLandmarksMatrixWriter(options, formatted_dst)
             case '.csv':
-                landmarks_matrix_writer = CsvLandmarksMatrixWriter(formatted_dst)
+                landmarks_matrix_writer = CsvLandmarksMatrixWriter(options, formatted_dst)
             case '.json':
-                landmarks_matrix_writer = JsonLandmarksMatrixWriter(formatted_dst)
+                landmarks_matrix_writer = JsonLandmarksMatrixWriter(options, formatted_dst)
             case _:
                 raise ValueError
 
@@ -526,9 +557,9 @@ class Pipeline:
 
         match options['annotated_frames_show_format']:
             case None:
-                annotated_frames_viewer = DummyAnnotatedFramesViewer()
+                annotated_frames_viewer = DummyAnnotatedFramesViewer(options)
             case 'cv2':
-                annotated_frames_viewer = Cv2AnnotatedFramesViewer()
+                annotated_frames_viewer = Cv2AnnotatedFramesViewer(options)
             case _:
                 raise ValueError
 
@@ -541,9 +572,10 @@ class Pipeline:
     
         match options['annotated_frames_save_format']:
             case None:
-                annotated_frames_writer = DummyAnnotatedFramesWriter()
+                annotated_frames_writer = DummyAnnotatedFramesWriter(options)
             case 'cv2':
                 annotated_frames_writer = Cv2AnnotatedFramesWriter(
+                    options,
                     formatted_dst,
                     options['annotated_frames_save_width'],
                     options['annotated_frames_save_height'],
@@ -562,26 +594,33 @@ class Pipeline:
     _batch_executor: Executor | None = None
     _sample_executor: Executor | None = None
 
+    class _Initargs[*Ts](tuple[*Ts]):
+
+        callback: Callable[[Self], None] | None = None
+
+        def with_callback(self, cb: Callable[[Self], None]) -> Self:
+            self.callback = cb
+            return self
+
+        def __get__(self, inst: object | None, cls: type) -> Self:
+            if isinstance(inst, Executor) and self.callback is not None:
+                self.callback(self)
+            return self
+
     def _get_batch_executor(self, options: LMPipeOptions) -> Executor:
         if self._batch_executor is None:
-            self._worker_network_queue = WorkerNetworkQueue[_Item](
-                max_workers=options['max_workers']
-            )
             self._batch_executor = self.configure_batch_executor(
                 initializer=self._batch_executor_initializer,
-                initargs=(),
+                initargs=self._Initargs[()](),
                 options=options
             )
         return self._batch_executor
 
     def _get_sample_executor(self, options: LMPipeOptions) -> Executor:
         if self._sample_executor is None:
-            self._worker_network_queue = WorkerNetworkQueue[_Item](
-                max_workers=options['max_workers']
-            )
             self._sample_executor = self.configure_sample_executor(
                 initializer=self._sample_executor_initializer,
-                initargs=(),
+                initargs=self._Initargs[()](),
                 options=options
             )
         return self._sample_executor
@@ -593,6 +632,20 @@ class Pipeline:
         initargs: tuple[*Ts],
         options: LMPipeOptions
         ) -> Executor:
+        """Configure the executor for batch processing.
+        
+        This method can be overridden to customize the executor used for batch processing.
+        By default, it returns a ProcessPoolExecutor when batch mode is enabled and max_workers > 0,
+        otherwise returns a DummyExecutor for sequential processing.
+        
+        Args:
+            initializer (Callable[[*Ts], None]): Function to call to initialize each worker process.
+            initargs (tuple[*Ts]): Arguments to pass to the initializer function.
+            options (LMPipeOptions): LMPipe options containing executor configuration.
+            
+        Returns:
+            Executor: Executor instance for batch processing.
+        """
 
         if options['executor_mode'] != 'batch' or options['max_workers'] == 0:
             return DummyExecutor(
@@ -613,6 +666,20 @@ class Pipeline:
         initargs: tuple[*Ts],
         options: LMPipeOptions
         ) -> Executor:
+        """Configure the executor for sample processing.
+        
+        This method can be overridden to customize the executor used for sample processing.
+        By default, it returns a ProcessPoolExecutor when sample mode is enabled and max_workers > 0,
+        otherwise returns a DummyExecutor for sequential processing.
+        
+        Args:
+            initializer (Callable[[*Ts], None]): Function to call to initialize each worker process.
+            initargs (tuple[*Ts]): Arguments to pass to the initializer function.
+            options (LMPipeOptions): LMPipe options containing executor configuration.
+            
+        Returns:
+            Executor: Executor instance for sample processing.
+        """
 
         if options['executor_mode'] != 'sample' or options['max_workers'] == 0:
             return DummyExecutor(
@@ -627,55 +694,52 @@ class Pipeline:
         )
 
     def _batch_executor_initializer(self):
-        _local.wv_pipelines.setdefault(self.main_id, self)
+        _local.wv_pipelines.setdefault(self._main_id, self)
 
     def _sample_executor_initializer(self):
-        _local.wv_pipelines.setdefault(self.main_id, self)
+        _local.wv_pipelines.setdefault(self._main_id, self)
 
 
-    class _with_ignore_exceptions[**P, R]:
-        def __init__(self, func: Callable[P, R]):
+    class _with_handle_exceptions[**P, R, E]:
+        def __init__(self, func: Callable[P, R], handler: Callable[[Exception], E] = lambda ex: ex):
             self.func = func
-        def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R | None:
+            self.handler = handler
+
+        def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R | E:
             try:
                 return self.func(*args, **kwargs)
-            except Exception:
-                return None
+            except Exception as ex:
+                return self.handler(ex)
 
     def _with_thread_local[**P, R](
         self,
         func: Callable[Concatenate[Self, P], R]
         ):
-        return self._ThreadLocalMethod(
-            cls=self.__class__, main_id=self.main_id, func=func
-        )
+        return self._ThreadLocalMethod(self, func)
 
     class _ThreadLocalMethod[S: 'Pipeline', **P, R]:
 
         def __init__(
             self,
-            cls: type[S],
-            main_id: int,
+            inst: S,
             func: Callable[Concatenate[S, P], R],
             ):
 
-            self.cls = cls # not need to serialize
-            self.main_id = main_id # lightweight for serialize
-            self.func = func # not need to serialize
+            self.cls = inst.__class__
+            self._main_id = inst._main_id
+            self.func = func
 
         def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
 
-            pipeline = _local.wv_pipelines.get(self.main_id, None)
+            pipeline = _local.wv_pipelines.get(self._main_id, None)
 
             if pipeline is None:
                 raise RuntimeError("Pipeline instance not found in thread local storage.")
 
-            if not isinstance(pipeline, self.cls) or pipeline.main_id != self.main_id:
+            if not isinstance(pipeline, self.cls) or pipeline._main_id != self._main_id:
                 raise RuntimeError("Pipeline instance mismatch.")
 
-            self.pipeline = pipeline
-
-            return self.func(self.pipeline, *args, **kwargs)
+            return self.func(pipeline, *args, **kwargs)
 
     ### iterators
 
@@ -687,10 +751,32 @@ class Pipeline:
 
     # preimplemented hook
     def configure_batch_iterator[T](self, batch_map: Iterator[T]) -> Iterator[T]:
+        """Configure the iterator for batch processing results.
+        
+        This method can be overridden to customize how batch processing results are iterated.
+        For example, you could add progress tracking, filtering, or transformation logic.
+        
+        Args:
+            batch_map (Iterator[T]): Iterator of batch processing results.
+            
+        Returns:
+            Iterator[T]: Iterator that may be modified or wrapped with additional functionality.
+        """
         return batch_map
 
     # preimplemented hook
     def configure_sample_iterator[T](self, sample_map: Iterator[T]) -> Iterator[T]:
+        """Configure the iterator for sample processing results.
+        
+        This method can be overridden to customize how sample processing results are iterated.
+        For example, you could add progress tracking, filtering, or transformation logic.
+        
+        Args:
+            sample_map (Iterator[T]): Iterator of sample processing results.
+            
+        Returns:
+            Iterator[T]: Iterator that may be modified or wrapped with additional functionality.
+        """
         return sample_map
 
     def _src_dst_generator(self, src_dst: SrcDst) -> Iterator[SrcDst]:

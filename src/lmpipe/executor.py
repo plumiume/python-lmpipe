@@ -1,8 +1,13 @@
 from typing import Callable
 from concurrent.futures import Executor, Future
-from multiprocessing import Queue
 
 class DummyExecutor(Executor):
+    """A dummy executor that executes tasks sequentially in the current thread.
+    
+    This executor mimics the interface of ProcessPoolExecutor and ThreadPoolExecutor
+    but executes all tasks immediately in the calling thread. Useful for debugging
+    or when parallel processing is not desired.
+    """
 
     # like 2nd overload of ThreadPoolExecutor.__init__
     # and 2nd overload of ProcessPoolExecutor.__init__
@@ -14,6 +19,13 @@ class DummyExecutor(Executor):
         initializer: Callable[[*Ts], object],
         initargs: tuple[*Ts],
         ):
+        """Initialize the dummy executor.
+        
+        Args:
+            max_workers (int | None, optional): Ignored, kept for compatibility.
+            initializer (Callable): Function to call for initialization.
+            initargs (tuple): Arguments to pass to the initializer.
+        """
 
         initializer(*initargs)
 
@@ -24,6 +36,16 @@ class DummyExecutor(Executor):
         *args: P.args,
         **kwargs: P.kwargs
         ) -> Future[T]:
+        """Submit a callable to be executed immediately.
+        
+        Args:
+            fn (Callable): The callable to execute.
+            *args: Positional arguments to pass to the callable.
+            **kwargs: Keyword arguments to pass to the callable.
+            
+        Returns:
+            Future[T]: A Future object representing the execution result.
+        """
 
         ftr = Future[T]()
 
@@ -34,46 +56,3 @@ class DummyExecutor(Executor):
             ftr.set_exception(e)
 
         return ftr
-
-class _Sync:
-    def __init__(self, sync_id: int) -> None:
-        self.sync_id = sync_id
-
-class WorkerNetworkQueue[T]:
-
-    def __init__(self, max_workers: int):
-
-        self.max_workers = max_workers
-        self._ident = max_workers
-        self._sync_q: 'Queue[_Sync]' = Queue()
-        self._queues: dict[int, 'Queue[T]'] = {
-            i: Queue()
-            for i in range(max_workers + 1)
-        } # max_workers == main ident
-        for i in range(max_workers):
-            self._sync_q.put(_Sync(i))
-
-    def __getstate__(self) -> dict[str, object]:
-        return {
-            **self.__dict__
-        }
-
-    def __setstate__(self, state: dict[str, object]):
-
-        self.__dict__.update(state)
-        sync = self._sync_q.get()
-        self._ident = sync.sync_id
-
-    def put(self, ident: int | None, data: T, block: bool = True, timeout: float | None = None):
-
-        if ident is not None:
-            self._queues[ident].put(data, block, timeout)
-
-        # broadcast
-        for i in range(self.max_workers + 1):
-            if i != ident:
-                self._queues[i].put(data, block, timeout)
-
-    def get(self, block: bool = True, timeout: float | None = None) -> T:
-
-        return self._queues[self._ident].get(block, timeout)

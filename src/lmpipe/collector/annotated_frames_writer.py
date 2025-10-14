@@ -6,13 +6,11 @@ import cv2
 import numpy as np
 from cv2.typing import MatLike
 
+from ..options import LMPipeOptions
 from .base import BaseCollector, ProcessFrameResult
 
 FormatLiteral = Literal['cv2'] | None
 Formats: tuple[FormatLiteral, ...] = ('cv2', None)
-
-ModeLiteral = Literal['skip', 'overwrite', 'postfix']
-Modes: tuple[ModeLiteral, ...] = ('skip', 'overwrite', 'postfix')
 
 class AnnotatedFramesWriter(BaseCollector, ABC):
 
@@ -37,6 +35,7 @@ class Cv2AnnotatedFramesWriter(AnnotatedFramesWriter):
 
     def __init__(
         self,
+        lmpipe_options: LMPipeOptions,
         path: Path,
         width: int,
         height: int,
@@ -45,16 +44,27 @@ class Cv2AnnotatedFramesWriter(AnnotatedFramesWriter):
         ext: str
         ):
 
-        self.path = path.with_suffix(ext)
+        super().__init__(lmpipe_options)
+
+        self.path = self.apply_mode(
+            path.with_suffix(ext),
+            self.lmpipe_options['annotated_frames_save_mode']
+        )
+        self.width = width
+        self.height = height
+        self.fps = fps
+        self.fourcc = fourcc
+
+    def setup(self):
 
         self.writer = cv2.VideoWriter(
             filename=str(self.path),
-            fourcc=fourcc,
-            fps=fps, 
-            frameSize=(width, height)
+            fourcc=self.fourcc,
+            fps=self.fps,
+            frameSize=(self.width, self.height)
         )
 
-        self.dummy_frame = np.zeros((height, width, 3), dtype=np.uint8)
+        self.dummy_frame = np.zeros((self.height, self.width, 3), dtype=np.uint8)
 
     def collect_frame(self, annotated_frame: MatLike | None, frame_idx: int):
 
