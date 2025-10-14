@@ -131,7 +131,7 @@ class ExecutorNetwork[ToWorker, ToExecutor]:
         if pid is None:
             raise RuntimeError('Process ID is None')
         # global
-        self._executor_process: ProcessIdent = pid
+        self._executor_pid: ProcessIdent = pid
 
         # executor only
         self._next_pending_ident = 0
@@ -166,8 +166,8 @@ class ExecutorNetwork[ToWorker, ToExecutor]:
 
     def get_worker_listener(self) -> PendingWorkerRef[ToWorker, ToExecutor]:
 
-        if current_process().name != 'MainProcess':
-            raise RuntimeError('Not in main process')
+        if current_process().pid != self._executor_pid:
+            raise RuntimeError('Not in main thread of main process')
 
         pending_worker_ref = PendingWorkerRef(self)
         self._pending_worker_refs[self._next_pending_ident] = pending_worker_ref
@@ -197,7 +197,7 @@ class ExecutorNetwork[ToWorker, ToExecutor]:
             )
 
         else:
-            self._worker_process[ident] = self._executor_process
+            self._worker_process[ident] = self._executor_pid
             ref._set_worker_info( # pyright: ignore[reportPrivateUsage]
                 pid=process.pid,
                 tid=ident
@@ -239,7 +239,7 @@ class ExecutorNetwork[ToWorker, ToExecutor]:
             )
         elif worker_id not in self._worker_process:
             raise RuntimeError('Worker ID not found')
-        elif self._worker_process[worker_id] == self._executor_process:
+        elif self._worker_process[worker_id] == self._executor_pid:
             thread_ids.append((worker_id, to_worker))
         else:
             process_ids.append((
