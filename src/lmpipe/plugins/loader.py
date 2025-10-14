@@ -1,3 +1,15 @@
+"""Plugin loader for LMPipe estimators.
+
+This module provides functionality for loading and managing estimator
+plugins, including holistic part estimators and hand-specific estimators.
+
+Types:
+    TypeLiteral: Union of all supported estimator type literals.
+
+Attributes:
+    TYPE_LITERALS: Tuple of all supported type literal values.
+"""
+
 # pyright: reportUnnecessaryIsInstance=false
 from typing import Any, Callable as C, Literal, TypeGuard
 from pathlib import Path

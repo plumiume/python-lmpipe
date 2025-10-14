@@ -10,12 +10,12 @@ requires-python = ">=3.12"
 dependencies = [
     "absl-py>=2.3.1",
     "clipar",
-    "cloudpickle>=3.1.1",
     "loky>=3.5.6",
     "mediapipe>=0.10.14",
     "opencv-python>=4.12.0.88",
     "parse>=1.20.2",
     "requests>=2.32.4",
+    "rich>=14.2.0",
 ]
 
 [project.scripts]
@@ -39,8 +39,9 @@ clipar = { git = "https://github.com/plumiume/python-clipar.git", branch = "dev/
 
 [dependency-groups]
 dev = [
-    "ipykernel[colorama]>=6.30.1",
-    "ipython>=9.5.0",
+    "colorama>=0.4.6",
+    "ipykernel>=6.30.1",
+    "ipython>=9.6.0",
     "loky>=3.5.6",
     "types-html5lib>=1.1.11.20250917",
     "types-requests>=2.32.4.20250913",

@@ -4,6 +4,7 @@ from typing import Literal
 import cv2
 from cv2.typing import MatLike
 
+from ..options import LMPipeOptions
 from .base import BaseCollector, ProcessFrameResult
 
 FormatLiteral = Literal['cv2'] | None
@@ -30,11 +31,16 @@ class DummyAnnotatedFramesViewer(AnnotatedFramesViewer):
 
 class Cv2AnnotatedFramesViewer(AnnotatedFramesViewer):
 
-    def __init__(self, window_name: str | None = None):
+    def __init__(self, lmpipe_options: LMPipeOptions, window_name: str | None = None):
+
+        super().__init__(lmpipe_options)
+
         if window_name is None:
             self.window_name = str(id(self))
         else:
             self.window_name = window_name
+
+    def setup(self):
         cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
 
     def collect_frame(self, annotated_frame: MatLike | None, frame_idx: int):
