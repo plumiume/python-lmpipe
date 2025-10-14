@@ -187,7 +187,7 @@ class HolisticEstimator(Estimator):
         return ret_landmarks[:, :self.holistic_args.dimensions - 1]
 
     @annotate
-    def annotate( # pyright: ignore[reportIncompatibleVariableOverride]
+    def annotate(
         self,
         frame_src: MatLike,
         frame_idx: int,

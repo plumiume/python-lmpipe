@@ -1,7 +1,8 @@
-from typing import * # pyright: ignore[reportWildcardImportFromLibrary]
-from typing import Callable as C
 from abc import ABC, abstractmethod
-from functools import cache
+from typing import Any, Callable
+
+
+from functools import cache, update_wrapper
 from numpy._typing import (
     _ArrayLikeFloat_co as ArrayLikeFloat, # pyright: ignore[reportPrivateUsage]
     _ArrayLikeStr_co as ArrayLikeStr, # pyright: ignore[reportPrivateUsage]
@@ -14,73 +15,101 @@ from ..options import LMPipeOptions, DEFAULT_LMPIPE_OPTIONS
 
 type NDArrayFloat = NDArray[np.floating]
 type NDArrayStr = NDArray[np.str_]
+type Estimator = 'Estimator' # pyright: ignore[reportRedeclaration]
 
-class decorator[E: "Estimator", **P, R](ABC):
+def headers[E: Estimator](
+    func: Callable[[E], ArrayLikeStr]
+    ):
+    """
+    Decorator for methods that generate header arrays.
 
-    def __init__(self, func: C[Concatenate[E, P], R]):
-        self._func = func
-        self._bound = None
+    Wraps the `headers` method of `Estimator` class to convert `ArrayLikeStr` to `NDArrayStr`.
 
-    def _with_bound(self, instance: E) -> Self:
-        self._bound = instance
-        return self
+    Args:
+        func: `(self) -> ArrayLikeStr`:
+            Method that returns header array
 
-    def _get_instance(self, msg: str = "{module}:{qualname} must be called on an instance.") -> E:
-        if self._bound is None:
-            raise RuntimeError(msg.format(
-                module=self._func.__module__,
-                qualname=self._func.__qualname__,
-            ))
-        return self._bound
+    Returns:
+        out: `(self) -> NDArrayStr`:
+            Wrapped method
+    """
 
-    def __get__(self, instance: E | None, owner: type[E]):
+    def wrapper(self: E) -> NDArrayStr:
+        return np.asarray(func(self))
 
-        if instance is None:
-            return self
+    update_wrapper(wrapper, func)
+    return wrapper
 
-        return self.__class__(self._func)._with_bound(instance)
+def estimate[E: Estimator](
+    func: Callable[[E, MatLike, int], ArrayLikeFloat | None]
+    ):
+    """
+    Decorator for methods that perform estimation processing.
 
-    @abstractmethod
-    def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
+    Returns an array filled with NaN values when the frame is `None` or landmarks are `None`.
+    Converts the return value to `NDArrayFloat`.
 
-class headers[E: "Estimator"](decorator[E, [], ArrayLikeStr]):
+    Args:
+        func: `(E, MatLike, int) -> ArrayLikeFloat | None`:
+            Method that performs estimation processing
 
-    def __call__(self, inst: E) -> NDArrayStr:
-        return np.asarray(self._func(inst))
+    Returns:
+        out: `(E, MatLike | None, int) -> NDArrayFloat`:
+            Wrapped method
+    """
 
-class estimate[E: "Estimator"](decorator[E, [MatLike, int], ArrayLikeFloat | None]):
-
-    def __call__(self, frame_src: MatLike | None, frame_idx: int) -> NDArrayFloat:
-
-        inst = self._get_instance()
+    def wrapper(
+        self: E,
+        frame_src: MatLike | None,
+        frame_idx: int
+        ) -> NDArrayFloat:
 
         if frame_src is None:
-            return np.full(inst.shape, np.nan)
+            return np.full(self.shape, np.nan)
 
-        landmarks = self._func(inst, frame_src, frame_idx)
+        landmarks = func(self, frame_src, frame_idx)
 
         if landmarks is None:
-            return np.full(inst.shape, np.nan)
+            return np.full(self.shape, np.nan)
 
         return np.asarray(landmarks)
 
-class annotate[E: "Estimator"](decorator[E, [MatLike, int, NDArrayFloat], MatLike | None]):
+    update_wrapper(wrapper, func)
+    return wrapper
 
-    def __call__(self, frame_src: MatLike, frame_idx: int, landmarks: NDArrayFloat) -> MatLike:
+def annotate[E: Estimator](
+    func: Callable[[E, MatLike, int, NDArrayFloat], MatLike | None]
+    ):
+    """
+    Decorator for methods that annotate landmarks on frames.
 
-        inst = self._get_instance()
+    Returns the original frame when the annotation result is None.
 
-        annotated_frame = self._func(
-            inst,
-            frame_src,
-            frame_idx,
-            (np.asarray(landmarks))
-        )
+    Args:
+        func: `(E, MatLike, int, NDArrayFloat) -> MatLike | None`:
+            Method that performs annotation processing
 
-        if annotated_frame is None:
+    Returns:
+        out: `(E, MatLike, int, NDArrayFloat) -> MatLike`:
+            Wrapped method
+    """
+
+    def wrapper(
+        self: E,
+        frame_src: MatLike,
+        frame_idx: int,
+        landmarks: NDArrayFloat
+        ) -> MatLike:
+
+        frame = func(self, frame_src, frame_idx, landmarks)
+
+        if frame is None:
             return frame_src
 
-        return annotated_frame
+        return frame
+
+    update_wrapper(wrapper, func)
+    return wrapper
 
 class Estimator(ABC):
 
@@ -88,20 +117,79 @@ class Estimator(ABC):
 
     @property
     @abstractmethod
-    def shape(self) -> tuple[int, int]: ...
+    def shape(self) -> tuple[int, int]:
+        """
+        Abstract property that returns shape of the estimation result array.
+
+        Returns:
+            out: `tuple[int, int]`:
+                Shape of estimation result array (rows, columns)
+        """
+        ...
+
+    @estimate
+    @abstractmethod
+    def estimate(
+        self,
+        frame_src: MatLike,
+        frame_idx: int
+        ) -> ArrayLikeFloat | None:
+        """
+        Abstract method that estimates landmarks from frames.
+
+        Args:
+            frame_src: `MatLike`
+                Input frame image
+            frame_idx: `int`
+                Frame index
+
+        Returns:
+            out: `ArrayLikeFloat | None`
+                Estimated landmark array, or `None` if estimation failed
+        """
+        ...
 
     @property
     @headers
     @cache
-    def headers(self) -> NDArrayStr:
+    def headers(self) -> ArrayLikeStr:
+        """
+        Returns array of header names corresponding to each element of estimation result.
+
+        Returns:
+            out: `ArrayLikeStr`:
+                Array of header names matching the shape of estimation results
+
+        Generates coordinate indices as dot-separated strings based on `shape`.
+        Results are cached.
+
+        Current Implementation:
+            Creates headers in format "row.col" (e.g., "0.0", "0.1", "1.0", "1.1")
+            based on coordinate indices from np.ndindex(self.shape).
+            For a shape of (2, 3), generates: ["0.0", "0.1", "0.2", "1.0", "1.1", "1.2"]
+            reshaped to match the original shape.
+
+        Override Guidelines:
+            This method can be overridden to provide custom header names.
+            When overriding, ensure all three decorators are applied in the correct order:
+
+            ```python
+            @property
+            @headers
+            @cache
+            def headers(self) -> ArrayLikeStr:
+                # Custom implementation
+                return custom_header_array
+            ```
+
+            The @headers decorator converts ArrayLikeStr to NDArrayStr.
+            The @cache decorator ensures results are cached for performance.
+        """
+
         return np.array([
             '.'.join(map(str, coord))
             for coord in np.ndindex(self.shape)
         ]).reshape(self.shape)
-
-    @estimate
-    @abstractmethod
-    def estimate(*args: Any, **kwargs: Any) -> Any: ...
 
     @annotate
     def annotate(
@@ -110,10 +198,89 @@ class Estimator(ABC):
         frame_idx: int,
         landmarks: NDArrayFloat
         ) -> MatLike | None:
-        return frame_src
+        """
+        Annotates landmarks on frames.
 
-    def setup(self): pass
+        Args:
+            frame_src: `MatLike`
+                Input frame image to be annotated
+            frame_idx: `int`
+                Frame index in the sequence (can be used for temporal annotations)
+            landmarks: `NDArrayFloat`
+                Landmark array containing the estimated landmark coordinates
 
-    def on_before_estimate(self, info: Any): pass # TODO
+        Returns:
+            out: `MatLike | None`:
+                Annotated frame with landmarks drawn, or `None` to use original frame
 
-    def on_after_estimate(self, info: Any): pass # TODO
+        Default implementation does nothing and returns `None`.
+        Override in subclasses to implement specific annotation processing.
+
+        Current Implementation:
+            Returns None, indicating no annotation is performed.
+            The @annotate decorator will return the original frame_src unchanged.
+            This serves as a pass-through implementation for subclasses to override.
+
+        Override Guidelines:
+            This method can be overridden to provide custom annotation visualization.
+            When overriding, ensure the @annotate decorator is applied:
+            
+            ```python
+            @annotate
+            def annotate(
+                self,
+                frame_src: MatLike,
+                frame_idx: int,
+                landmarks: NDArrayFloat
+            ) -> MatLike | None:
+                # Custom annotation implementation
+                annotated_frame = frame_src.copy()
+                # Draw landmarks, connections, etc.
+                return annotated_frame
+            ```
+
+            The @annotate decorator handles None return values by returning the original frame.
+            If your implementation returns None, the original frame will be returned unchanged.
+        """
+        return None
+
+    def setup(self):
+        """
+        Optional setup method for initialization tasks.
+
+        This method can be overridden in subclasses to perform any necessary setup or initialization
+        before the estimator is used. It is called once after the estimator instance is created.
+
+        Default implementation does nothing.
+        """
+        pass
+
+    def on_before_estimate(self, info: Any): # TODO:
+        """
+        Optional hook method called before each estimation.
+
+        This method can be overridden in subclasses to perform any actions or logging
+        before the `estimate` method is called. It receives an `info` object that can
+        contain relevant context or metadata about the upcoming estimation.
+
+        Args:
+            info: `Any`
+                Contextual information or metadata about the upcoming estimation.
+        Default implementation does nothing.
+        """
+        pass
+
+    def on_after_estimate(self, info: Any): # TODO:
+        """
+        Optional hook method called after each estimation.
+
+        This method can be overridden in subclasses to perform any actions or logging
+        after the `estimate` method has been called. It receives an `info` object that can
+        contain relevant context or metadata about the completed estimation.
+
+        Args:
+            info: `Any`
+                Contextual information or metadata about the completed estimation.
+        Default implementation does nothing.
+        """
+        pass
