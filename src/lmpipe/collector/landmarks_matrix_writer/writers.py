@@ -20,16 +20,11 @@ Classes:
 """
 
 from abc import ABC, abstractmethod
-from typing import Literal
 from pathlib import Path
 
 import numpy as np
 
-from ..options import LMPipeOptions
-from .base import BaseCollector, ProcessFrameResult, NDArrayFloat, NDArrayStr
-
-FormatLiteral = Literal['.npy', '.csv', '.json'] | None
-Formats: tuple[FormatLiteral, ...] = ('.npy', '.csv', '.json', None)
+from ..base import BaseCollector, ProcessFrameResult, NDArrayFloat, NDArrayStr, LMPipeOptions
 
 class LandmarksMatrixWriter(BaseCollector, ABC):
     """Abstract base class for landmark matrix writers.

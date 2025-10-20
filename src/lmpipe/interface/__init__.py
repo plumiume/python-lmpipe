@@ -1,62 +1,45 @@
-from typing import Unpack, Iterator, Callable, Concatenate, Self
+from typing import Unpack, Iterable, Iterator, Callable, Concatenate, Self, Literal
 from itertools import repeat, count
 from functools import wraps
+from queue import Queue
 from pathlib import Path
-from threading import local, get_ident
+from threading import local, get_ident, Thread
+from enum import Enum
 from multiprocessing import cpu_count
 from concurrent.futures import Executor, Future
-from loky import ProcessPoolExecutor # pyright: ignore[reportMissingTypeStubs]
 from weakref import WeakValueDictionary
 
 import cv2
 from cv2.typing import MatLike
 
-from .utils import (
+from ..utils import (
     PathLike, SrcDst,
     is_video_file, is_image_file, is_image_sequence_dir,
     video_capture_frame_generator, image_sequence_frame_generator
 )
-from .options import LMPipeOptions, LMPipeOptionsPartial, DEFAULT_LMPIPE_OPTIONS
-from .estimator import Estimator
-from .executor import DummyExecutor
+from ..options import LMPipeOptions, LMPipeOptionsPartial, DEFAULT_LMPIPE_OPTIONS
+from ..estimator import Estimator
+from .executor import DummyExecutor, ProcessPoolExecutor
 
-from .collector.base import BaseCollector, ProcessFrameResult
-from .collector.annotated_frames_viewer import (
-    AnnotatedFramesViewer,
-    DummyAnnotatedFramesViewer,
-    Cv2AnnotatedFramesViewer
-)
-from .collector.annotated_frames_writer import (
-    AnnotatedFramesWriter,
-    DummyAnnotatedFramesWriter,
-    Cv2AnnotatedFramesWriter
-)
-from .collector.landmarks_matrix_writer import (
-    LandmarksMatrixWriter,
-    DummyLandmarksMatrixWriter,
-    NpyLandmarksMatrixWriter,
-    CsvLandmarksMatrixWriter,
-    JsonLandmarksMatrixWriter
-)
-
-loky_shutdown = ProcessPoolExecutor.shutdown
-def overridden_loky_shutdown(self: ProcessPoolExecutor, wait: bool = True, *, cancel_futures: bool = False) -> None:
-    return loky_shutdown(self, wait=wait, kill_workers=cancel_futures)
-ProcessPoolExecutor.shutdown = overridden_loky_shutdown # pyright: ignore[reportAttributeAccessIssue]
+from ..collector.base import BaseCollector, ProcessFrameResult
+from ..collector.annotated_frames_viewer import viewers as annotated_frames_viewer
+from ..collector.annotated_frames_writer import writers as annotated_frames_writer
+from ..collector.landmarks_matrix_writer import writers as landmarks_matrix_writer
 
 class _Local(local):
     def __init__(self):
-        self.wv_pipelines: WeakValueDictionary[int, "Pipeline"] = WeakValueDictionary()
+        self.wv_pipelines: WeakValueDictionary[int, "LMPipeInterface"] = WeakValueDictionary()
         "id(main_thread)->pipeline(current_thread)"
+
+class _SentinelType(Enum):
+    SENTINEL = 0
+
 
 def dummy(*args: object, **kwargs: object): pass
 
 _local = _Local()
 
-
-type _Item = object
-
-class Pipeline:
+class LMPipeInterface:
 
     ## Serialize
 
@@ -81,7 +64,7 @@ class Pipeline:
         estimator: Estimator,
         **options: Unpack[LMPipeOptionsPartial]
         ):
-        """Initialize the Pipeline with an estimator and options.
+        """Initialize the LMPipeInterface with an estimator and options.
         
         Args:
             estimator (Estimator): The estimator to use for processing.
@@ -103,7 +86,7 @@ class Pipeline:
         }
 
     @staticmethod
-    def _public_api[S: 'Pipeline', **P, R](
+    def _public_api[S: 'LMPipeInterface', **P, R](
         func: Callable[Concatenate[S, P], R]
         ) -> Callable[Concatenate[S, P], R]:
         
@@ -305,9 +288,15 @@ class Pipeline:
             handler=lambda ex: None
         )
 
+        src_dst_iter = self.configure_src_dst_iterator(
+            self._background_iterate(
+                self._src_dst_generator(src_dst)
+            )
+        )
+
         batch_map = batch_executor.map(
             run_sample,
-            self._src_dst_generator(src_dst),
+            src_dst_iter,
             repeat(options)
         )
 
@@ -488,10 +477,14 @@ class Pipeline:
             self._get_annotated_frames_viewer(options),
             self._get_annotated_frames_writer(dst, options)
         ]
+        max_postfix_count = max(
+            cllctr.postfix_count for cllctr in collectors
+        )
 
         for cllctr in collectors:
             if cllctr.skip_process:
                 return # skip if any collector is set to skip
+            cllctr.apply_postfix(max_postfix_count)
 
         for ret in sample_iter:
             for cllctr in collectors:
@@ -535,47 +528,47 @@ class Pipeline:
         for cllctr in collectors:
             cllctr.close()
 
-    def _get_landmarks_matrix_writer(self, dst: Path, options: LMPipeOptions) -> LandmarksMatrixWriter:
+    def _get_landmarks_matrix_writer(self, dst: Path, options: LMPipeOptions) -> landmarks_matrix_writer.LandmarksMatrixWriter:
 
         formatted_dst = Path(str(dst).format(task='landmarks'))
         formatted_dst.parent.mkdir(parents=True, exist_ok=True)
 
         match options['landmarks_matrix_save_format']:
             case None:
-                landmarks_matrix_writer = DummyLandmarksMatrixWriter(options)
+                writer = landmarks_matrix_writer.DummyLandmarksMatrixWriter(options)
             case '.npy':
-                landmarks_matrix_writer = NpyLandmarksMatrixWriter(options, formatted_dst)
+                writer = landmarks_matrix_writer.NpyLandmarksMatrixWriter(options, formatted_dst)
             case '.csv':
-                landmarks_matrix_writer = CsvLandmarksMatrixWriter(options, formatted_dst)
+                writer = landmarks_matrix_writer.CsvLandmarksMatrixWriter(options, formatted_dst)
             case '.json':
-                landmarks_matrix_writer = JsonLandmarksMatrixWriter(options, formatted_dst)
-            case _:
+                writer = landmarks_matrix_writer.JsonLandmarksMatrixWriter(options, formatted_dst)
+            case _: # runtime check # type: ignore
                 raise ValueError
 
-        return landmarks_matrix_writer
+        return writer
 
-    def _get_annotated_frames_viewer(self, options: LMPipeOptions) -> AnnotatedFramesViewer:
+    def _get_annotated_frames_viewer(self, options: LMPipeOptions) -> annotated_frames_viewer.AnnotatedFramesViewer:
 
         match options['annotated_frames_show_format']:
             case None:
-                annotated_frames_viewer = DummyAnnotatedFramesViewer(options)
+                viewer = annotated_frames_viewer.DummyAnnotatedFramesViewer(options)
             case 'cv2':
-                annotated_frames_viewer = Cv2AnnotatedFramesViewer(options)
-            case _:
+                viewer = annotated_frames_viewer.Cv2AnnotatedFramesViewer(options)
+            case _: # runtime check # type: ignore
                 raise ValueError
 
-        return annotated_frames_viewer
+        return viewer
 
-    def _get_annotated_frames_writer(self, dst: Path, options: LMPipeOptions) -> AnnotatedFramesWriter:
+    def _get_annotated_frames_writer(self, dst: Path, options: LMPipeOptions) -> annotated_frames_writer.AnnotatedFramesWriter:
 
         formatted_dst = Path(str(dst).format(task='annotated_frames'))
         formatted_dst.parent.mkdir(parents=True, exist_ok=True)
     
         match options['annotated_frames_save_format']:
             case None:
-                annotated_frames_writer = DummyAnnotatedFramesWriter(options)
+                writer = annotated_frames_writer.DummyAnnotatedFramesWriter(options)
             case 'cv2':
-                annotated_frames_writer = Cv2AnnotatedFramesWriter(
+                writer = annotated_frames_writer.Cv2AnnotatedFramesWriter(
                     options,
                     formatted_dst,
                     options['annotated_frames_save_width'],
@@ -584,10 +577,10 @@ class Pipeline:
                     options['annotated_frames_save_fourcc'],
                     options['annotated_frames_save_ext']
                 )
-            case _:
+            case _: # runtime check # type: ignore
                 raise ValueError
 
-        return annotated_frames_writer
+        return writer
 
 
     ### executors
@@ -595,11 +588,24 @@ class Pipeline:
     _batch_executor: Executor | None = None
     _sample_executor: Executor | None = None
 
+    class _Initargs[*Ts](tuple[*Ts]):
+
+        callback: Callable[[Self], None] | None = None
+
+        def with_callback(self, cb: Callable[[Self], None]) -> Self:
+            self.callback = cb
+            return self
+
+        def __get__(self, inst: object | None, cls: type) -> Self:
+            if isinstance(inst, Executor) and self.callback is not None:
+                self.callback(self)
+            return self
+
     def _get_batch_executor(self, options: LMPipeOptions) -> Executor:
         if self._batch_executor is None:
             self._batch_executor = self.configure_batch_executor(
                 initializer=self._batch_executor_initializer,
-                initargs=(),
+                initargs=self._Initargs[()](),
                 options=options
             )
         return self._batch_executor
@@ -608,7 +614,7 @@ class Pipeline:
         if self._sample_executor is None:
             self._sample_executor = self.configure_sample_executor(
                 initializer=self._sample_executor_initializer,
-                initargs=(),
+                initargs=self._Initargs[()](),
                 options=options
             )
         return self._sample_executor
@@ -705,7 +711,7 @@ class Pipeline:
         ):
         return self._ThreadLocalMethod(self, func)
 
-    class _ThreadLocalMethod[S: 'Pipeline', **P, R]:
+    class _ThreadLocalMethod[S: 'LMPipeInterface', **P, R]:
 
         def __init__(
             self,
@@ -722,10 +728,10 @@ class Pipeline:
             pipeline = _local.wv_pipelines.get(self._main_id, None)
 
             if pipeline is None:
-                raise RuntimeError("Pipeline instance not found in thread local storage.")
+                raise RuntimeError("LMPipeInterface instance not found in thread local storage.")
 
             if not isinstance(pipeline, self.cls) or pipeline._main_id != self._main_id:
-                raise RuntimeError("Pipeline instance mismatch.")
+                raise RuntimeError("LMPipeInterface instance mismatch.")
 
             return self.func(pipeline, *args, **kwargs)
 
@@ -767,6 +773,21 @@ class Pipeline:
         """
         return sample_map
 
+    def configure_src_dst_iterator(self, src_dst_iter: Iterable[SrcDst]) -> Iterable[SrcDst]:
+        """Configure the iterator for source-destination pairs.
+        
+        This method can be overridden to customize how source-destination pairs are iterated.
+        For example, you could add filtering or transformation logic.
+        
+        Args:
+            src_dst_iter (Iterable[SrcDst]): Iterable of source-destination pairs.
+
+        Returns:
+            Iterable[SrcDst]: Iterable that may be modified or wrapped with additional functionality.
+        """
+        return src_dst_iter
+
+
     def _src_dst_generator(self, src_dst: SrcDst) -> Iterator[SrcDst]:
 
         src_path, dst_path = src_dst
@@ -796,3 +817,28 @@ class Pipeline:
                 continue
 
             raise ValueError
+
+    def _background_iterate[T](self, iterable: Iterable[T], maxsize: int = 0) -> Iterable[T]:
+
+        q: "Queue[T | Literal[_SentinelType.SENTINEL]]" = Queue(maxsize=maxsize)
+
+        thread = Thread(
+            target=self._background_iterate_impl,
+            args=(iterable, q),
+        )
+        
+        thread.start()
+
+        while True:
+            item = q.get()
+            if item is _SentinelType.SENTINEL:
+                break
+            yield item
+
+        thread.join()
+
+    def _background_iterate_impl[T](self, iterable: Iterable[T], q: "Queue[T | Literal[_SentinelType.SENTINEL]]"):
+
+        for item in iterable:
+            q.put(item)
+        q.put(_SentinelType.SENTINEL)

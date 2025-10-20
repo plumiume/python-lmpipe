@@ -1,4 +1,8 @@
+from typing import Iterable, Iterator, Unpack
 from clipar import NotSelected
+from lmpipe.estimator._base import Estimator
+from lmpipe.options import LMPipeOptionsPartial
+from lmpipe.utils import SrcDst
 from .args import GlobalArgs, plugins
 
 def main():
@@ -9,8 +13,15 @@ def main():
     if lmpipe_args is NotSelected:
         raise ValueError("lmpipe_args is required")
 
-    from ...pipeline import Pipeline
+    from queue import Queue as ThreadQueue
+    from multiprocessing import Queue as ProcessQueue
+    from ...interface import LMPipeInterface
     from ...estimator.holistic.main import HolisticEstimator, HolisticPoseEstimator, HolisticPartEstimator
+    from rich.progress import (
+        Progress,
+        TextColumn, TimeElapsedColumn, TimeRemainingColumn,
+        BarColumn, MofNCompleteColumn,
+    )
 
     holistic = global_args.holistic
     pose = global_args.pose
@@ -105,7 +116,73 @@ def main():
 
     assert global_args.lmpipe_options
 
-    pipeline = Pipeline(
+    class CliLMPipeIInterface(LMPipeInterface):
+
+        def configure_src_dst_iterator(self, src_dst_iter: Iterable[SrcDst]) -> Iterable[SrcDst]:
+            # rich.Progressを構成
+            # return src_dst_iter
+            progress = Progress(
+                TextColumn("{task.description}"),
+                BarColumn(),
+                MofNCompleteColumn(),
+                TimeElapsedColumn(),
+                TimeRemainingColumn(),
+            )
+            with progress:
+                task = progress.add_task(
+                    "{:<16}".format("Searching..."),
+                    total=len(list(src_dst_iter))
+                )
+                for src_dst in src_dst_iter:
+                    yield src_dst
+                    progress.advance(task)
+
+        def configure_batch_iterator[T](self, batch_map: Iterator[T]) -> Iterator[T]:
+            # rich.Progressを構成
+            # return batch_map
+            progress = Progress(
+                TextColumn("{task.description}"),
+                BarColumn(),
+                MofNCompleteColumn(),
+                TimeElapsedColumn(),
+                TimeRemainingColumn(),
+            )
+            with progress:
+                task = progress.add_task(
+                    "{:<16}".format("Processing..."),
+                    total=len(list(batch_map))
+                )
+                for item in batch_map:
+                    yield item
+                    progress.advance(task)
+
+        def configure_sample_iterator[T](self, sample_map: Iterator[T]) -> Iterator[T]:
+            # rich.Progressを構成（マルチプロセス上での実行の可能性のため実装を保留）
+            # return sample_map
+            return sample_map
+
+        def __init__(self, estimator: Estimator, **options: Unpack[LMPipeOptionsPartial]):
+
+            super().__init__(estimator, **options)
+
+            # [
+            #     iteration_type,
+            #     iterator_id,
+            #     is_stop_iteration (otherwise init, yield...)
+            # ] |
+            # None: 終了通知
+            self._iteration_notify_q: (
+                "ThreadQueue[tuple[str, int, bool] | None]"
+                | "ProcessQueue[tuple[str, int, bool] | None]"
+            ) = (
+                ProcessQueue()
+                if self.lmpipe_options["executor_mode"]
+                and self.lmpipe_options["max_workers"] >= 0
+                else ThreadQueue()
+            )
+
+
+    pipeline = CliLMPipeIInterface(
         estimator=root_estimator,
         landmarks_matrix_save_format=global_args.lmpipe_options.landmarks_matrix_save_format,
         annotated_frames_show_format=global_args.lmpipe_options.annotated_frames_show_format,

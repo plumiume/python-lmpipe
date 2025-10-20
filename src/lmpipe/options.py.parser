@@ -1,0 +1,377 @@
+#!/usr/bin/env python
+"""Template parser for generating options.py from options.py.template.
+
+This script uses AST to parse the template file and generates the complete
+options.py file with proper TypedDict definitions, CLI group decorators,
+and default configurations.
+"""
+
+from typing import Any
+import ast
+import re
+from pathlib import Path
+
+def camel_to_snake_case(name: str) -> str:
+    """Convert CamelCase to snake_case."""
+    # Insert underscore before uppercase letters that follow lowercase letters or digits
+    s1 = re.sub('([a-z0-9])([A-Z])', r'\1_\2', name)
+    return s1.upper()
+
+
+def parse_template_to_options():
+    """Parse options.py.template and generate options.py using AST."""
+    
+    # Get current directory
+    current_dir = Path(__file__).parent
+    template_path = current_dir / 'options.py.template'
+    output_path = current_dir / 'options.py'
+    
+    if not template_path.exists():
+        print(f"Template file not found: {template_path}")
+        return
+    
+    # Read template content
+    with open(template_path, 'r', encoding='utf-8') as f:
+        template_content = f.read()
+    
+    # Apply template substitutions
+    content = template_content.replace(
+        '#${import_typeddict}', 
+        'from typing import TypedDict, Literal'
+    ).replace(
+        '#${from_clipar_import_mixin_group}', 
+        'from clipar import group, mixin'
+    )
+    
+    try:
+        # Parse AST
+        tree = ast.parse(content)
+        
+        # Extract class information
+        classes = extract_classes_from_ast(tree)
+        
+        # Generate output content
+        output_content = generate_options_content(tree, classes)
+        
+        # Ensure content ends with newline
+        if not output_content.endswith('\n'):
+            output_content += '\n'
+        
+        # Write output
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(output_content)
+        
+        print(f"Generated {output_path} from {template_path}")
+        
+    except SyntaxError as e:
+        print(f"Syntax error in template: {e}")
+
+
+def extract_classes_from_ast(tree: ast.Module) -> list[dict[str, Any]]:
+    """Extract class definitions from AST tree."""
+    classes: list[dict[str, Any]] = []
+    
+    for node in tree.body:
+        if isinstance(node, ast.ClassDef):
+            class_info = parse_class_node(node)
+            classes.append(class_info)
+    
+    return classes
+
+
+def parse_class_node(class_node: ast.ClassDef) -> dict[str, Any]:
+    """Parse a single class definition node."""
+    class_name = class_node.name
+    docstring = ast.get_docstring(class_node)
+    base_classes = [get_node_name(base) for base in class_node.bases]
+    
+    # Extract attributes
+    attributes: list[dict[str, Any]] = []
+    i = 0
+    while i < len(class_node.body):
+        stmt = class_node.body[i]
+        
+        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
+            attr: dict[str, Any] = {
+                'name': stmt.target.id,
+                'type': get_type_string(stmt.annotation),
+                'default': get_default_value(stmt.value) if stmt.value else None,
+                'description': None
+            }
+            
+            # Check for description in next line
+            if i + 1 < len(class_node.body):
+                next_stmt = class_node.body[i + 1]
+                if (isinstance(next_stmt, ast.Expr) and 
+                    isinstance(next_stmt.value, ast.Constant) and 
+                    isinstance(next_stmt.value.value, str)):
+                    attr['description'] = next_stmt.value.value
+                    i += 1
+            
+            attributes.append(attr)
+        
+        i += 1
+    
+    return {
+        'name': class_name,
+        'docstring': docstring,
+        'attributes': attributes,
+        'base_classes': base_classes
+    }
+
+
+def get_node_name(node: ast.AST) -> str:
+    """Get name from AST node."""
+    if isinstance(node, ast.Name):
+        return node.id
+    elif isinstance(node, ast.Attribute):
+        return f"{get_node_name(node.value)}.{node.attr}"
+    return str(node)
+
+
+def get_type_string(annotation: ast.AST) -> str:
+    """Convert type annotation to string."""
+    try:
+        return ast.unparse(annotation)
+    except:
+        if isinstance(annotation, ast.Name):
+            return annotation.id
+        return str(annotation)
+
+
+def get_default_value(value_node: ast.AST) -> str:
+    """Get default value as string."""
+    if isinstance(value_node, ast.Constant):
+        return repr(value_node.value)
+    elif isinstance(value_node, ast.Name):
+        return value_node.id
+    try:
+        return ast.unparse(value_node)
+    except:
+        return str(value_node)
+
+
+def extract_imports_from_ast(tree: ast.Module) -> list[str]:
+    """Extract import statements."""
+    imports: list[str] = []
+    for node in tree.body:
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            try:
+                imports.append(ast.unparse(node))
+            except:
+                pass
+    return imports
+
+
+def generate_options_content(tree: ast.Module, classes: list[dict[str, Any]]) -> str:
+    """Generate the complete options.py content."""
+    
+    # Generate dynamic module docstring
+    # Extract class names and their descriptions from actual classes
+    individual_classes = [cls for cls in classes if not cls['base_classes']]
+    combined_classes = [cls for cls in classes if cls['base_classes']]
+    
+    class_types: list[str] = []
+    for cls in individual_classes + combined_classes:
+        clean_name = cls['name'].lower().replace('options', '').strip()
+        if clean_name:
+            class_types.append(clean_name)
+    
+    # Build dynamic docstring
+    header = f'''"""Configuration options for the LMPipe pipeline.
+
+This module defines TypedDict classes and default configurations for
+{', '.join(class_types)} options used throughout the pipeline processing.
+
+Attributes:'''
+    
+    # Add documentation for default constants dynamically
+    for class_info in individual_classes:
+        name = class_info['name']
+        clean_name = name.lower().replace('options', '').strip()
+        desc = class_info['docstring'] or f'{clean_name} configuration options'
+        clean_desc = desc.replace('CLI argument group for', '').replace('Type definition for', '').strip()
+        snake_case_name = camel_to_snake_case(name)
+        header += f"\n    DEFAULT_{snake_case_name} ({name}): Default {clean_desc}."
+    
+    # Add combined class defaults
+    for class_info in combined_classes:
+        name = class_info['name']
+        clean_name = name.lower().replace('options', '').strip() 
+        snake_case_name = camel_to_snake_case(name)
+        header += f"\n    DEFAULT_{snake_case_name} ({name}): Combined default {clean_name} configuration."
+    
+    header += '\n"""\n\n'
+    
+    # Imports
+    imports = extract_imports_from_ast(tree)
+    imports_section = '\n'.join(imports) + '\n\n'
+    
+    # Class definitions (skip classes that have base_classes - they'll be handled in combined section)
+    class_sections: list[str] = []
+    for class_info in classes:
+        if not class_info['base_classes']:  # Only generate individual classes, not combined ones
+            class_sections.append(generate_class_section(class_info))
+    
+    # Combined classes
+    combined_section = generate_combined_classes(classes)
+    
+    return header + imports_section + '\n\n'.join(class_sections) + '\n\n' + combined_section
+
+
+def generate_class_section(class_info: dict[str, Any]) -> str:
+    """Generate all class variants for a single class."""
+    name = class_info['name']
+    # Use template docstring exactly as written
+    docstring = class_info['docstring'] or f"{name} configuration options."
+    attributes = class_info['attributes']
+
+    sections: list[str] = []
+
+    # TypedDict class
+    typeddict = [f'class {name}(TypedDict):']
+    typeddict.append(f'    """{docstring}"""')
+    
+    for attr in attributes:
+        typeddict.append(f'    {attr["name"]}: {attr["type"]}')
+        desc = attr['description'] or f'{attr["name"].replace("_", " ")}'
+        typeddict.append(f"    '{desc}'")
+    
+    if not attributes:
+        typeddict.append('    pass')
+    
+    sections.append('\n'.join(typeddict))
+    
+    # Partial TypedDict class
+    partial = [
+        f'class {name}Partial(TypedDict, total=False):',
+        f'    """Partial {docstring.replace("Type definition for", "type definition for")}',
+        '    ',
+        f'    Same as {name} but with all fields optional.',
+        '    """'
+    ]
+    
+    for attr in attributes:
+        partial.append(f'    {attr["name"]}: {attr["type"]}')
+        desc = attr['description'] or f'{attr["name"].replace("_", " ")}'
+        partial.append(f"    '{desc}'")
+    
+    if not attributes:
+        partial.append('    pass')
+    
+    sections.append('\n'.join(partial))
+    
+    # CLI Group class
+    group = [
+        '@group',
+        f'class {name}Group(mixin.ReprMixin):',
+        f'    """{docstring}"""'
+    ]
+    
+    for attr in attributes:
+        default_val = attr['default'] if attr['default'] is not None else 'None'
+        desc = attr['description'] or attr['name'].replace('_', ' ')
+        
+        group.append(f'    {attr["name"]}: {attr["type"]} = {default_val}')
+        group.append(f"    '{desc}'")
+    
+    if not attributes:
+        group.append('    pass')
+    
+    sections.append('\n'.join(group))
+    
+    # Default configuration
+    snake_case_name = camel_to_snake_case(name)
+    default_config = [f'DEFAULT_{snake_case_name}: {name} = {{']
+    
+    for i, attr in enumerate(attributes):
+        default_val = attr['default'] if attr['default'] is not None else 'None'
+        comma = ',' if i < len(attributes) - 1 else ''
+        default_config.append(f"    '{attr['name']}': {default_val}{comma}")
+    
+    default_config.append('}')
+    sections.append('\n'.join(default_config))
+    
+    return '\n\n'.join(sections)
+
+
+def generate_combined_classes(classes: list[dict[str, Any]]) -> str:
+    """Generate combined classes like LMPipeOptions."""
+    combined_classes = [cls for cls in classes if cls['base_classes']]
+    
+    if not combined_classes:
+        return ''
+    
+    sections: list[str] = []
+    
+    for combined_class in combined_classes:
+        name = combined_class['name']
+        bases = combined_class['base_classes']
+        docstring = combined_class['docstring'] or f"{name} configuration options."
+        
+        # TypedDict class
+        typeddict = [f'class {name}(']
+        for base in bases:
+            typeddict.append(f'    {base},')
+        typeddict.extend([
+            '    ):',
+            f'    """{docstring}"""',
+            '    pass'
+        ])
+        
+        sections.append('\n'.join(typeddict))
+        
+        # Partial TypedDict class
+        partial = [f'class {name}Partial(']
+        for base in bases:
+            partial.append(f'    {base}Partial,')
+        partial.extend([
+            '    total=False',
+            '    ):',
+            f'    """Partial {docstring.lower()}',
+            '    ',
+            f'    Same as {name} but with all fields optional, useful for',
+            '    overriding specific configuration values.',
+            '    """',
+            '    pass'
+        ])
+        
+        sections.append('\n'.join(partial))
+        
+        # CLI Group class
+        group = [
+            '@group',
+            f'class {name}Group('
+        ]
+        for base in bases:
+            group.append(f'    {base}Group.T,')
+        group.extend([
+            '    ):',
+            f'    """CLI argument group combining {" and ".join(b.lower().replace("options", "") for b in bases)} options."""',
+            '    pass'
+        ])
+        
+        sections.append('\n'.join(group))
+        
+        # Default configuration
+        snake_case_name = camel_to_snake_case(name)
+        default_config = [f'DEFAULT_{snake_case_name}: {name} = {{']
+        for base in bases:
+            base_snake_case = camel_to_snake_case(base)
+            default_config.append(f'    **DEFAULT_{base_snake_case},')
+        default_config.append('}')
+        
+        sections.append('\n'.join(default_config))
+    
+    return '\n\n'.join(sections)
+
+
+
+
+def main():
+    """Main function to run the template parser."""
+    parse_template_to_options()
+
+
+if __name__ == '__main__':
+    main()

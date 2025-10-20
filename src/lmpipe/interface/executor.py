@@ -1,5 +1,6 @@
 from typing import Callable
 from concurrent.futures import Executor, Future
+from loky import ProcessPoolExecutor as LokyExecutor # pyright: ignore[reportMissingTypeStubs]
 
 class DummyExecutor(Executor):
     """A dummy executor that executes tasks sequentially in the current thread.
@@ -56,3 +57,25 @@ class DummyExecutor(Executor):
             ftr.set_exception(e)
 
         return ftr
+
+class ProcessPoolExecutor(LokyExecutor):
+    """A ProcessPoolExecutor that supports cancelling futures on shutdown.
+    
+    This subclass of Loky's ProcessPoolExecutor adds the ability to cancel
+    pending futures when shutting down the executor, similar to the behavior
+    of ThreadPoolExecutor.
+    """
+
+    def shutdown( # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        wait: bool = True,
+        *,
+        cancel_futures: bool = False
+        ) -> None:
+        """Shut down the executor, optionally cancelling pending futures.
+        
+        Args:
+            wait (bool, optional): If True, wait for all running tasks to complete.
+            cancel_futures (bool, optional): If True, cancel all pending futures.
+        """
+        super().shutdown(wait=wait, kill_workers=cancel_futures)

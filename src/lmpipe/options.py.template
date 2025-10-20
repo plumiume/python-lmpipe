@@ -1,0 +1,44 @@
+#${import_typeddict}
+#${from_clipar_import_mixin_group}
+from typing import Literal
+
+from .collector.base import ModeLiteral
+from .collector.landmarks_matrix_writer.options import FormatLiteral as LMWFormatLiteral
+from .collector.annotated_frames_viewer.options import FormatLiteral as AFVFormatLiteral
+from .collector.annotated_frames_writer.options import FormatLiteral as AFWFormatLiteral
+
+class OutputOptions:
+    """Type definition for output configuration options."""
+    landmarks_matrix_save_format: LMWFormatLiteral = None
+    'format to save landmarks matrix, default is None'
+    landmarks_matrix_save_mode: ModeLiteral = 'skip'
+    'mode to save landmarks matrix, default is "skip"'
+    annotated_frames_show_format: AFVFormatLiteral = None
+    'format to show annotated frames, default is None'
+    annotated_frames_save_format: AFWFormatLiteral = None
+    'format to save annotated frames, default is None'
+    annotated_frames_save_mode: ModeLiteral = 'skip'
+    'mode to save annotated frames, default is "skip"'
+    annotated_frames_save_width: int = 640
+    'width to save annotated frames'
+    annotated_frames_save_height: int = 480
+    'height to save annotated frames'
+    annotated_frames_save_fps: float = 30.0
+    'fps to save annotated frames'
+    annotated_frames_save_fourcc: str = 'mp4v'
+    'fourcc to save annotated frames, default is "mp4v"'
+    annotated_frames_save_ext: str = '.mp4'
+    'file extension to save annotated frames, default is ".mp4"'
+
+class ExecutorOptions:
+    """Type definition for executor configuration options."""
+    max_workers: int = 0 # cpu_count()
+    'maximum number of worker threads/processes, default is 4'
+    executor_mode: Literal['batch', 'sample'] | None = None
+    'executor mode'
+
+class LMPipeOptions(OutputOptions, ExecutorOptions):
+    """Complete lmpipe configuration options.
+    
+    Combines output and executor options into a single configuration type."""
+    pass

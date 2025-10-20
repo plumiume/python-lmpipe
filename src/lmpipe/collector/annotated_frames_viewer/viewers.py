@@ -1,14 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Literal
 
 import cv2
 from cv2.typing import MatLike
 
-from ..options import LMPipeOptions
-from .base import BaseCollector, ProcessFrameResult
-
-FormatLiteral = Literal['cv2'] | None
-Formats: tuple[FormatLiteral, ...] = ('cv2', None)
+from ..base import BaseCollector, ProcessFrameResult, LMPipeOptions
 
 class AnnotatedFramesViewer(BaseCollector, ABC):
 

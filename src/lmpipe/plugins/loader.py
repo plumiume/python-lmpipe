@@ -12,7 +12,6 @@ Attributes:
 
 # pyright: reportUnnecessaryIsInstance=false
 from typing import Any, Callable as C, Literal, TypeGuard
-from pathlib import Path
 import importlib.metadata
 
 from clipar.entities import NamespaceWrapper
@@ -27,8 +26,6 @@ _PluginName = str
 TYPE_LITERALS = (
     *HOLISTIC_PARTS_LITERALS,
 )
-
-_ENGINES_PATH = Path(__file__).parent
 
 # pyproject.toml @ plugin package
 # [project.entry-points."lmpipe.plugins"]

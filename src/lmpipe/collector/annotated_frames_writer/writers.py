@@ -1,16 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Literal
 from pathlib import Path
 
 import cv2
 import numpy as np
 from cv2.typing import MatLike
 
-from ..options import LMPipeOptions
-from .base import BaseCollector, ProcessFrameResult
-
-FormatLiteral = Literal['cv2'] | None
-Formats: tuple[FormatLiteral, ...] = ('cv2', None)
+from ..base import BaseCollector, ProcessFrameResult, LMPipeOptions
 
 class AnnotatedFramesWriter(BaseCollector, ABC):
 
@@ -40,7 +35,7 @@ class Cv2AnnotatedFramesWriter(AnnotatedFramesWriter):
         width: int,
         height: int,
         fps: float,
-        fourcc: int,
+        fourcc: str,
         ext: str
         ):
 
@@ -59,7 +54,7 @@ class Cv2AnnotatedFramesWriter(AnnotatedFramesWriter):
 
         self.writer = cv2.VideoWriter(
             filename=str(self.path),
-            fourcc=self.fourcc,
+            fourcc=cv2.VideoWriter.fourcc(*self.fourcc),
             fps=self.fps,
             frameSize=(self.width, self.height)
         )
