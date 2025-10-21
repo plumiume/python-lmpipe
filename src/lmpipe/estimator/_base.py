@@ -255,9 +255,13 @@ class Estimator(ABC):
         """
         pass
 
-    def on_before_estimate(self, info: Any): # TODO:
+
+    def on_before_estimate(self, info: Any):
         """
         Optional hook method called before each estimation.
+
+        This method is called on each worker when executing the first task (corresponding to a function call)
+        of a job (corresponding to a submit or map call).
 
         This method can be overridden in subclasses to perform any actions or logging
         before the `estimate` method is called. It receives an `info` object that can
@@ -270,9 +274,12 @@ class Estimator(ABC):
         """
         pass
 
-    def on_after_estimate(self, info: Any): # TODO:
+
+    def on_after_estimate(self, info: Any):
         """
         Optional hook method called after each estimation.
+
+        This method is called on the job submitter (caller) when the job has finished.
 
         This method can be overridden in subclasses to perform any actions or logging
         after the `estimate` method has been called. It receives an `info` object that can

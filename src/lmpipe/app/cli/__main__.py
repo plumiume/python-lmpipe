@@ -13,15 +13,8 @@ def main():
     if lmpipe_args is NotSelected:
         raise ValueError("lmpipe_args is required")
 
-    from queue import Queue as ThreadQueue
-    from multiprocessing import Queue as ProcessQueue
     from ...interface import LMPipeInterface
     from ...estimator.holistic.main import HolisticEstimator, HolisticPoseEstimator, HolisticPartEstimator
-    from rich.progress import (
-        Progress,
-        TextColumn, TimeElapsedColumn, TimeRemainingColumn,
-        BarColumn, MofNCompleteColumn,
-    )
 
     holistic = global_args.holistic
     pose = global_args.pose
@@ -116,69 +109,107 @@ def main():
 
     assert global_args.lmpipe_options
 
+    from rich.progress import (
+        Progress,
+        BarColumn, TextColumn, TimeElapsedColumn, TimeRemainingColumn, MofNCompleteColumn,
+    )
+    from .progress_bar import ProgressManager, ProgressClient
+
     class CliLMPipeIInterface(LMPipeInterface):
 
         def configure_src_dst_iterator(self, src_dst_iter: Iterable[SrcDst]) -> Iterable[SrcDst]:
-            # rich.Progressを構成
-            # return src_dst_iter
-            progress = Progress(
-                TextColumn("{task.description}"),
-                BarColumn(),
-                MofNCompleteColumn(),
-                TimeElapsedColumn(),
-                TimeRemainingColumn(),
+            task_id = self._progress_client.run_progress_method(
+                self._src_dst_progress_id,
+                Progress.add_task,
+                'Searching Samples ...'
             )
-            with progress:
-                task = progress.add_task(
-                    "{:<16}".format("Searching..."),
-                    total=len(list(src_dst_iter))
+            for src_dst in src_dst_iter:
+                self._progress_client.run_progress_method(
+                    self._src_dst_progress_id,
+                    Progress.advance,
+                    task_id,
                 )
-                for src_dst in src_dst_iter:
-                    yield src_dst
-                    progress.advance(task)
+                yield src_dst
+            self._progress_client.run_progress_method(
+                self._src_dst_progress_id,
+                Progress.remove_task,
+                task_id,
+            )
 
         def configure_batch_iterator[T](self, batch_map: Iterator[T]) -> Iterator[T]:
-            # rich.Progressを構成
-            # return batch_map
-            progress = Progress(
-                TextColumn("{task.description}"),
-                BarColumn(),
-                MofNCompleteColumn(),
-                TimeElapsedColumn(),
-                TimeRemainingColumn(),
+            task_id = self._progress_client.run_progress_method(
+                self._batch_progress_id,
+                Progress.add_task,
+                'Processing Samples ...'
             )
-            with progress:
-                task = progress.add_task(
-                    "{:<16}".format("Processing..."),
-                    total=len(list(batch_map))
+            for batch in batch_map:
+                self._progress_client.run_progress_method(
+                    self._batch_progress_id,
+                    Progress.advance,
+                    task_id,
                 )
-                for item in batch_map:
-                    yield item
-                    progress.advance(task)
+                yield batch
+            self._progress_client.run_progress_method(
+                self._batch_progress_id,
+                Progress.remove_task,
+                task_id,
+            )
 
         def configure_sample_iterator[T](self, sample_map: Iterator[T]) -> Iterator[T]:
-            # rich.Progressを構成（マルチプロセス上での実行の可能性のため実装を保留）
-            # return sample_map
-            return sample_map
+            task_id = self._progress_client.run_progress_method(
+                self._sample_progress_id,
+                Progress.add_task,
+                'Processing Frames ...'
+            )
+            for sample in sample_map:
+                self._progress_client.run_progress_method(
+                    self._sample_progress_id,
+                    Progress.advance,
+                    task_id,
+                )
+                yield sample
+            self._progress_client.run_progress_method(
+                self._sample_progress_id,
+                Progress.remove_task,
+                task_id,
+            )
 
         def __init__(self, estimator: Estimator, **options: Unpack[LMPipeOptionsPartial]):
 
             super().__init__(estimator, **options)
 
-            # [
-            #     iteration_type,
-            #     iterator_id,
-            #     is_stop_iteration (otherwise init, yield...)
-            # ] |
-            # None: 終了通知
-            self._iteration_notify_q: (
-                "ThreadQueue[tuple[str, int, bool] | None]"
-                | "ProcessQueue[tuple[str, int, bool] | None]"
-            ) = (
-                ProcessQueue()
-                if self.lmpipe_options["executor_mode"]
-                and self.lmpipe_options["max_workers"] >= 0
-                else ThreadQueue()
+            # マネージャーのシリアライズを防ぐため
+            # クライアントのみを保持する
+            self._progress_client: ProgressClient = ProgressManager().get_client()
+
+            self._src_dst_progress_id = self._progress_client.register_progress(
+                Progress(
+                    TextColumn("[bold blue]{task.description:<24}</bold blue>"),
+                    BarColumn(),
+                    MofNCompleteColumn(),
+                    TimeElapsedColumn(),
+                    TimeRemainingColumn(),
+                )
+            )
+
+            self._batch_progress_id = self._progress_client.register_progress(
+                Progress(
+                    TextColumn("[bold green]{task.description:<24}</bold green>"),
+                    BarColumn(),
+                    MofNCompleteColumn(),
+                    TimeElapsedColumn(),
+                    TimeRemainingColumn(),
+                )
+            )
+
+            self._sample_progress_id = self._progress_client.register_progress(
+                Progress(
+                    TextColumn("[bold magenta]{task.description:<24}</bold magenta>"),
+                    BarColumn(),
+                    MofNCompleteColumn(),
+                    TimeElapsedColumn(),
+                    TimeRemainingColumn(),
+                )
             )
 
 

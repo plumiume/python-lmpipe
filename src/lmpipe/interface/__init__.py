@@ -490,8 +490,6 @@ class LMPipeInterface:
             for cllctr in collectors:
                 cllctr.collect(ret)
 
-        # TODO: call all workers' on_after_estimate after the last frame
-        # currently only the main thread's estimator is called
         self.estimator.on_after_estimate(object())
 
         for cllctr in collectors:
@@ -521,8 +519,6 @@ class LMPipeInterface:
         for cllctr in collectors:
             cllctr.collect(result)
 
-        # TODO: call all workers' on_after_estimate after the last frame
-        # currently only the main thread's estimator is called
         self.estimator.on_after_estimate(object())
 
         for cllctr in collectors:
