@@ -21,20 +21,18 @@ type _NA_T = Literal[_SingletonEnum.NA]
 _NA = _SingletonEnum.NA
 
 class _ReduceItem[**P, R]:
+    
     def __init__(
         self,
         worker_id: _WorkerId,
-        progress: _ProgressId | Progress,
+        progress_id: _ProgressId | None,
         func: Callable[Concatenate[Progress, P], R],
         *args: P.args,
         **kwargs: P.kwargs,
         ):
 
-        # ルーティング用
         self.worker_id = worker_id
-        # IDならProgressManager側にあるものとして扱う
-        # ProgressオブジェクトならProgressManagerに登録して扱う
-        self.progress = progress
+        self.progress_id = progress_id
         self.func = func
         self.args = args
         self.kwargs = kwargs
@@ -44,6 +42,7 @@ class _ReduceItem[**P, R]:
 class _MapItem[R]:
     def __init__(
         self,
+        progress_id: _ProgressId,
         *,
         result: R | _NA_T = _NA,
         exception: Exception | None = None,
@@ -51,7 +50,7 @@ class _MapItem[R]:
 
         # _ReduceItemでIDなら同じもの
         # Progressオブジェクトなら登録されたID
-        self.progress: _ProgressId
+        self.progress_id = progress_id
         self.result = result
         self.exception = exception
 
@@ -138,13 +137,19 @@ class ProgressManager:
             if reduce_item is None:
                 break
 
-            if isinstance(reduce_item.progress, _ProgressId):
-                progress_id = self._validate_progress_id(reduce_item.progress)
-                if isinstance(progress_id, _MapItem):
-                    self._get_map_q(reduce_item.worker_id).put(progress_id)
-                    continue
+            if reduce_item.progress_id is None:
+                progress_id = self._register_progress(
+                    Progress(
+                        *reduce_item.args, # type: ignore
+                        **reduce_item.kwargs, # type: ignore
+                    )
+                )
             else:
-                progress_id = self._register_progress(reduce_item.progress)
+                progress_id = self._validate_progress_id(reduce_item.progress_id)
+
+            if isinstance(progress_id, _MapItem):
+                self._get_map_q(reduce_item.worker_id).put(progress_id)
+                continue
 
             result = self._execute_reduce_item(progress_id, reduce_item)
             self._get_map_q(reduce_item.worker_id).put(result)
@@ -158,6 +163,7 @@ class ProgressManager:
     def _validate_progress_id(self, progress_id: _ProgressId) -> _ProgressId | _MapItem[Any]:
         if progress_id not in self._progress_registry:
             return _MapItem(
+                progress_id=progress_id,
                 exception=ValueError(f"{self._fqn}: Invalid progress ID: {progress_id}")
             )
         return progress_id
@@ -183,9 +189,9 @@ class ProgressManager:
                 *reduce_item.args, # type: ignore
                 **reduce_item.kwargs, # type: ignore
             )
-            return _MapItem(result=result)
+            return _MapItem(progress_id=progress_id, result=result)
         except Exception as e:
-            return _MapItem(exception=e)
+            return _MapItem(progress_id=progress_id, exception=e)
 
     @property
     def _fqn(self) -> str:
@@ -212,11 +218,18 @@ class ProgressManager:
         yield self
         self._with_client = False
 
-    def __getstate__(self):
+    def __getstate__(self) -> dict[str, Any]:
         if not self._with_client:
             raise RuntimeError(f"ProgressManager can only be serialized via ProgressClient")
         assert_spawning(self)
-        return super().__getstate__()
+        return {
+            **self.__dict__,
+            'manager_thread': None,  # Threadはシリアライズできない
+        }
+
+    def __setstate__(self, state: dict[str, Any]) -> None:
+        self.__dict__.update(state)
+        self._with_client = False
 
 class ProgressClient:
 
@@ -292,17 +305,19 @@ class ProgressClient:
     def manager(self) -> ProgressManager:
         return self._manager
 
-    def register_progress(self, progress: Progress) -> _ProgressId:
+    def register_progress(
+        self, progress: Progress
+        ) -> _ProgressId:
 
         reduce_item = _ReduceItem(
             worker_id=self._worker_id,
-            progress=progress,
-            func=lambda p: None, # 何もしない（内部ロジックでProgressIdを取得する）
+            progress_id=None,
+            func=lambda p: None, # 利用されない
         )
 
         map_item = self._remote(reduce_item)
 
-        return map_item.progress
+        return map_item.progress_id
 
     def run_progress_method[**P, R](
         self,
@@ -320,7 +335,7 @@ class ProgressClient:
 
         reduce_item = _ReduceItem(
             worker_id=self._worker_id,
-            progress=progress_id,
+            progress_id=progress_id,
             func=method_like,
             *args,
             **kwargs,

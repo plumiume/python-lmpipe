@@ -12,7 +12,7 @@ Attributes:
 from typing import TypedDict, Literal
 from clipar import group, mixin
 from typing import Literal
-from .collector.base import ModeLiteral
+from .collector.types import ModeLiteral
 from .collector.landmarks_matrix_writer.options import FormatLiteral as LMWFormatLiteral
 from .collector.annotated_frames_viewer.options import FormatLiteral as AFVFormatLiteral
 from .collector.annotated_frames_writer.options import FormatLiteral as AFWFormatLiteral

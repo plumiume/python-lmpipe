@@ -71,9 +71,8 @@ class LMPipeInterface:
             **options: Additional LMPipe options to override defaults.
         """
 
-        _local.wv_pipelines[self._main_id] = self
-
         self._main_id = id(self)
+        _local.wv_pipelines[self._main_id] = self
         self._current_sample_id = -1
 
         self.estimator = estimator

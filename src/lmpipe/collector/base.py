@@ -13,21 +13,14 @@ Classes:
 """
 
 from abc import ABC, abstractmethod
-from typing import Literal
 from pathlib import Path
 from dataclasses import dataclass
 
-import numpy as np
-from numpy.typing import NDArray
 from cv2.typing import MatLike
 
 from ..options import LMPipeOptions
 
-type NDArrayFloat = NDArray[np.floating]
-type NDArrayStr = NDArray[np.str_]
-
-ModeLiteral = Literal['skip', 'overwrite', 'postfix']
-Modes: tuple[ModeLiteral, ...] = ('skip', 'overwrite', 'postfix')
+from .types import NDArrayFloat, NDArrayStr, ModeLiteral
 
 @dataclass
 class ProcessFrameResult:
