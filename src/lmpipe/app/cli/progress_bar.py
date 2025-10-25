@@ -20,31 +20,12 @@ class _SingletonEnum(Enum):
 type _NA_T = Literal[_SingletonEnum.NA]
 _NA = _SingletonEnum.NA
 
-class _ReduceItem[**P, R]:
-    
-    def __init__(
-        self,
-        worker_id: _WorkerId,
-        progress_id: _ProgressId | None,
-        func: Callable[Concatenate[Progress, P], R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-        ):
-
-        self.worker_id = worker_id
-        self.progress_id = progress_id
-        self.func = func
-        self.args = args
-        self.kwargs = kwargs
-
-        self._with_client = False
-
 class _MapItem[R]:
     def __init__(
         self,
         progress_id: _ProgressId,
         *,
-        result: R | _NA_T = _NA,
+        result: R = _NA,
         exception: Exception | None = None,
         ):
 
@@ -54,12 +35,62 @@ class _MapItem[R]:
         self.result = result
         self.exception = exception
 
+class _InitFunc[**P]:
+    def __init__(
+        self,
+        func: Callable[P, Progress],
+        *args: P.args,
+        **kwargs: P.kwargs
+        ):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+    def __call__(self) -> Progress:
+        return self.func(*self.args, **self.kwargs)
+
+class _MethodFunc[**P, R]:
+    def __init__(
+        self,
+        progress_id: _ProgressId,
+        func: Callable[Concatenate[Progress, P], R],
+        *args: P.args,
+        **kwargs: P.kwargs,
+        ):
+        self.progress_id = progress_id
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+    def __call__(self, progress: Progress):
+        return self.func(progress, *self.args, **self.kwargs)
+
+class _ReduceItem[R]:
+    def __init__(
+        self,
+        worker_id: _WorkerId,
+        func: _InitFunc[...] | _MethodFunc[..., R]
+        ):
+        self.worker_id = worker_id
+        self.func = func
+
 class ProgressManagerState(IntEnum):
     INITIALIZED = auto()
+    "The ProgressManager has been initialized but not started."
     STARTED = auto()
+    "The ProgressManager is actively managing progress."
     STOPPED = auto()
+    "The ProgressManager has been stopped."
 
 class ProgressManager:
+    """Manages Progress instances across multiple worker processes and threads.
+
+    This class is responsible for coordinating the progress of tasks
+    across multiple workers, ensuring that progress updates are sent
+    to the correct progress bars.
+
+    Raises:
+        RuntimeError: If the ProgressManager is misused.
+
+    """
 
     _next_id: _ManagerId = 0
 
@@ -75,10 +106,10 @@ class ProgressManager:
         self._progress_registry: dict[_ProgressId, Progress] = {}
         self._next_progress_id = 0
 
-        self._reduce_q: 'Queue[_ReduceItem[..., Any] | None]' = Queue()
+        self._reduce_q: 'Queue[_ReduceItem[Any] | None]' = Queue()
         self._map_qs: dict[_WorkerId, 'Queue[_MapItem[Any]]'] = {}
 
-    #################################### Main Process Methods ####################################
+    ########################### Main Process Methods ###########################
 
     def _register_worker(self, worker_id: _WorkerId) -> 'Queue[_MapItem[Any]]':
         if worker_id in self._map_qs:
@@ -97,13 +128,21 @@ class ProgressManager:
         del self._map_qs[worker_id]
 
     def start(self) -> Self:
+        """ Start the ProgressManager.
+
+        Returns:
+            Self: The ProgressManager instance.
+        """
 
         if self._state > ProgressManagerState.INITIALIZED:
-            raise RuntimeError("ProgressManager has already been started or stopped")
+            raise RuntimeError(
+                "ProgressManager has already been started or stopped"
+            )
 
         if self.constructed_this_pid != getpid():
             raise RuntimeError(
-                "Cannot start ProgressManager in a different process than it was constructed in"
+                "Cannot start ProgressManager "
+                "in a different process than it was constructed in"
             )
 
         self.manager_thread = Thread(
@@ -114,13 +153,15 @@ class ProgressManager:
         return self
 
     def stop(self):
+        """Stop the ProgressManager."""
 
         if self._state != ProgressManagerState.STARTED:
             raise RuntimeError("ProgressManager is not started")
 
         if self.constructed_this_pid != getpid():
             raise RuntimeError(
-                "Cannot stop ProgressManager in a different process than it was constructed in"
+                "Cannot stop ProgressManager "
+                "in a different process than it was constructed in"
             )
 
         self._reduce_q.put(None)  # Shutdown signal
@@ -137,22 +178,43 @@ class ProgressManager:
             if reduce_item is None:
                 break
 
-            if reduce_item.progress_id is None:
-                progress_id = self._register_progress(
-                    Progress(
-                        *reduce_item.args, # type: ignore
-                        **reduce_item.kwargs, # type: ignore
-                    )
+            if reduce_item.worker_id not in self._map_qs:
+                raise RuntimeError(
+                    f"{self._fqn}: No map queue registered "
+                    f"for worker ID {reduce_item.worker_id}."
+                    " Ensure that ProgressClient is created "
+                    "in the same thread as the ProgressManager."
                 )
+
+            if isinstance(reduce_item.func, _InitFunc):
+                map_item = self._handle_init_func(reduce_item.func)
             else:
-                progress_id = self._validate_progress_id(reduce_item.progress_id)
+                map_item = self._handle_method_func(reduce_item.func)
+            self._map_qs[reduce_item.worker_id].put(map_item)
 
-            if isinstance(progress_id, _MapItem):
-                self._get_map_q(reduce_item.worker_id).put(progress_id)
-                continue
+    def _handle_init_func(self, func: _InitFunc[...]) -> _MapItem[Any]:
+        try:
+            progress = func()
+        except Exception as e:
+            return _MapItem(progress_id=-1, exception=e)
+        progress_id = self._register_progress(progress)
+        return _MapItem(progress_id=progress_id, result=progress)
 
-            result = self._execute_reduce_item(progress_id, reduce_item)
-            self._get_map_q(reduce_item.worker_id).put(result)
+    def _handle_method_func(self, func: _MethodFunc[..., Any]) -> _MapItem[Any]:
+        progress_id = self._val_progress_id(func.progress_id)
+        if progress_id is None:
+            return _MapItem(
+                progress_id=-1,
+                exception=RuntimeError(
+                    f"{self._fqn}: Invalid progress ID {func.progress_id}"
+                )
+            )
+        progress = self._progress_registry[progress_id]
+        try:
+            result = func(progress)
+        except Exception as e:
+            return _MapItem(progress_id=progress_id, exception=e)
+        return _MapItem(progress_id=progress_id, result=result)
 
     def _register_progress(self, progress: Progress) -> _ProgressId:
         progress_id = self._next_progress_id
@@ -160,12 +222,9 @@ class ProgressManager:
         self._next_progress_id += 1
         return progress_id
 
-    def _validate_progress_id(self, progress_id: _ProgressId) -> _ProgressId | _MapItem[Any]:
+    def _val_progress_id(self, progress_id: _ProgressId) -> _ProgressId | None:
         if progress_id not in self._progress_registry:
-            return _MapItem(
-                progress_id=progress_id,
-                exception=ValueError(f"{self._fqn}: Invalid progress ID: {progress_id}")
-            )
+            return None
         return progress_id
 
     def _get_map_q(self, worker_id: _WorkerId) -> 'Queue[_MapItem[Any]]':
@@ -175,41 +234,35 @@ class ProgressManager:
             )
         return self._map_qs[worker_id]
 
-    def _execute_reduce_item[R](
-        self,
-        progress_id: _ProgressId,
-        reduce_item: _ReduceItem[..., R],
-    ) -> _MapItem[R]:
-
-        progress = self._progress_registry[progress_id]
-
-        try:
-            result = reduce_item.func(
-                progress,
-                *reduce_item.args, # type: ignore
-                **reduce_item.kwargs, # type: ignore
-            )
-            return _MapItem(progress_id=progress_id, result=result)
-        except Exception as e:
-            return _MapItem(progress_id=progress_id, exception=e)
-
     @property
     def _fqn(self) -> str:
         return f"{self.__class__.__module__}.{self.__class__.__qualname__}"
 
-    #################################### Worker Process Methods ####################################
+    ########################## Worker Process Methods ##########################
 
     def get_client(self) -> "ProgressClient":
+        """Get a ProgressClient instance.
 
-        # ProgressManageのシリアライズを
-        #     プロセス作成ロジック内の
-        #     ProgressClient経由でのみ
-        # 許可する実装予定
+        ProgressClient provides an interface for using ProgressManager
+        in worker processes.  
+        This method must only be called within the same process
+        and thread context where
+        the ProgressManager was constructed.
 
-        # ProgressClientは
-        # ProgressManager, Threadで1つずつにするよう実装予定
-        # つまり、_WorkerIdはThreadのIDと同じになる
+        Serialization of ProgressManager is only allowed through ProgressClient,
+        ensuring safety in inter-process communication.
 
+        One ProgressClient instance is created per thread, and the WorkerID is
+        identical to the thread ID.
+
+        Returns:
+            ProgressClient:
+                ProgressClient instance corresponding to this ProgressManager
+
+        Note:
+            - ProgressClient operates as a singleton within the same thread
+            - Handoff to worker processes is performed via ProgressClient
+        """
         return ProgressClient(self)
 
     @contextmanager
@@ -220,7 +273,9 @@ class ProgressManager:
 
     def __getstate__(self) -> dict[str, Any]:
         if not self._with_client:
-            raise RuntimeError(f"ProgressManager can only be serialized via ProgressClient")
+            raise RuntimeError(
+                f"ProgressManager can only be serialized via ProgressClient"
+            )
         assert_spawning(self)
         return {
             **self.__dict__,
@@ -256,11 +311,12 @@ class ProgressClient:
             or this_tid != manager.constructed_this_tid
             ):
             raise RuntimeError(
-                "ProgressClient can only be instantiated in the same process and thread as its ProgressManager"
+                "ProgressClient can only be instantiated "
+                "in the same process and thread as its ProgressManager"
             )
 
         return cls._context.instancies.setdefault(
-            (cls._get_manager_id(manager), get_ident()),
+            (cls._get_manager_id(manager), this_tid),
             super().__new__(cls)
         )
 
@@ -283,7 +339,11 @@ class ProgressClient:
         self.__dict__.update(state)
         self._manager = pickle.loads(state['_manager'])
 
-    def _remote[R](self, reduce_item: _ReduceItem[..., R], throw: bool = True) -> _MapItem[R]:
+    def _remote[R](
+        self,
+        reduce_item: _ReduceItem[R],
+        throw: bool = True
+    ) -> _MapItem[R]:
 
         self._reduce_q.put(reduce_item)
         map_item = self._map_q.get()
@@ -298,24 +358,47 @@ class ProgressClient:
         return manager._id # pyright: ignore[reportPrivateUsage]
 
     @property
-    def _reduce_q(self) -> 'Queue[_ReduceItem[..., Any] | None]':
+    def _reduce_q(self) -> 'Queue[_ReduceItem[Any] | None]':
         return self._manager._reduce_q # pyright: ignore[reportPrivateUsage]
 
     @property
     def manager(self) -> ProgressManager:
+        """Associated ProgressManager instance."""
         return self._manager
 
-    def register_progress(
-        self, progress: Progress
+    def run_progress_init[**P](
+        self,
+        init_like: Callable[P, Progress],
+        *args: P.args,
+        **kwargs: P.kwargs,
         ) -> _ProgressId:
+        """Start a new progress bar.
 
-        reduce_item = _ReduceItem(
+        Args:
+            init_like: A callable that initializes the progress bar.
+            *args: Positional arguments to pass to the initializer.
+            **kwargs: Keyword arguments to pass to the initializer.
+
+        Raises:
+            map_item.exception: If the ProgressManager is stopped.
+
+        Returns:
+            _ProgressId: The ID of the newly created progress bar.
+        """
+
+        reduce_item = _ReduceItem[Any](
             worker_id=self._worker_id,
-            progress_id=None,
-            func=lambda p: None, # 利用されない
+            func=_InitFunc(
+                func=init_like,
+                *args,
+                **kwargs,
+            )
         )
 
         map_item = self._remote(reduce_item)
+
+        if map_item.exception is not None:
+            raise map_item.exception
 
         return map_item.progress_id
 
@@ -326,21 +409,28 @@ class ProgressClient:
         *args: P.args,
         **kwargs: P.kwargs,
         ) -> R:
+        """Run a method on the progress bar.
 
-        # method_likeはProgressのメソッドのようなものを想定
-        # Progress.methodがmethod_likeの基本
-        # Progressインスタンスの場合、
-        #     self.__class__.methodかProgress.methodをmethod_likeに設定
-        # カスタムロジックでも可能
+        Raises:
+            map_item.exception: If the ProgressManager is stopped.
+
+        Returns:
+            R: The result of the method call.
+        """
 
         reduce_item = _ReduceItem(
             worker_id=self._worker_id,
-            progress_id=progress_id,
-            func=method_like,
-            *args,
-            **kwargs,
+            func=_MethodFunc(
+                progress_id=progress_id,
+                func=method_like,
+                *args,
+                **kwargs,
+            )
         )
 
         map_item = self._remote(reduce_item)
 
-        return map_item.result  # type: ignore
+        if map_item.exception is not None:
+            raise map_item.exception
+
+        return map_item.result

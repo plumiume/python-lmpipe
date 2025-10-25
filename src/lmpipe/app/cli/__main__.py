@@ -182,34 +182,31 @@ def main():
             # クライアントのみを保持する
             self._progress_client: ProgressClient = ProgressManager().get_client()
 
-            self._src_dst_progress_id = self._progress_client.register_progress(
-                Progress(
-                    TextColumn("[bold blue]{task.description:<24}</bold blue>"),
-                    BarColumn(),
-                    MofNCompleteColumn(),
-                    TimeElapsedColumn(),
-                    TimeRemainingColumn(),
-                )
+            self._src_dst_progress_id = self._progress_client.run_progress_init(
+                Progress,
+                TextColumn("[bold blue]{task.description:<24}</bold blue>"),
+                BarColumn(),
+                MofNCompleteColumn(),
+                TimeElapsedColumn(),
+                TimeRemainingColumn(),
             )
 
-            self._batch_progress_id = self._progress_client.register_progress(
-                Progress(
-                    TextColumn("[bold green]{task.description:<24}</bold green>"),
-                    BarColumn(),
-                    MofNCompleteColumn(),
-                    TimeElapsedColumn(),
-                    TimeRemainingColumn(),
-                )
+            self._batch_progress_id = self._progress_client.run_progress_init(
+                Progress,
+                TextColumn("[bold green]{task.description:<24}</bold green>"),
+                BarColumn(),
+                MofNCompleteColumn(),
+                TimeElapsedColumn(),
+                TimeRemainingColumn(),
             )
 
-            self._sample_progress_id = self._progress_client.register_progress(
-                Progress(
-                    TextColumn("[bold magenta]{task.description:<24}</bold magenta>"),
-                    BarColumn(),
-                    MofNCompleteColumn(),
-                    TimeElapsedColumn(),
-                    TimeRemainingColumn(),
-                )
+            self._sample_progress_id = self._progress_client.run_progress_init(
+                Progress,
+                TextColumn("[bold magenta]{task.description:<24}</bold magenta>"),
+                BarColumn(),
+                MofNCompleteColumn(),
+                TimeElapsedColumn(),
+                TimeRemainingColumn(),
             )
 
 
