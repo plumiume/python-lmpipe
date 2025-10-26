@@ -1,9 +1,15 @@
-from typing import Iterable, Iterator, Unpack
+from typing import Iterable, Iterator, Unpack, Sized
+import os
+from threading import get_ident
+from multiprocessing import freeze_support
 from clipar import NotSelected
 from lmpipe.estimator._base import Estimator
 from lmpipe.options import LMPipeOptionsPartial
 from lmpipe.utils import SrcDst
 from .args import GlobalArgs, plugins
+
+os.environ["GRPC_VERBOSITY"] = "ERROR"
+os.environ["GRPC_minloglevel"] = "2"
 
 def main():
 
@@ -13,7 +19,9 @@ def main():
     if lmpipe_args is NotSelected:
         raise ValueError("lmpipe_args is required")
 
-    from ...interface import LMPipeInterface
+    import shutil
+
+    from ...interface import LMPipeInterface, shutdown_listener
     from ...estimator.holistic.main import HolisticEstimator, HolisticPoseEstimator, HolisticPartEstimator
 
     holistic = global_args.holistic
@@ -49,7 +57,7 @@ def main():
         temp_estimator = plugins['hand'][selected_type_name][1](namespace)
         if not isinstance(temp_estimator, HolisticPartEstimator | None):
             raise TypeError("hand estimator must be HolisticPartEstimator | None")
-        left_hand_estimator= right_hand_estimator = temp_estimator
+        left_hand_estimator = right_hand_estimator = temp_estimator
         face = getattr(namespace, "face", NotSelected)
     else:
         left_hand_estimator = None
@@ -111,67 +119,132 @@ def main():
 
     from rich.progress import (
         Progress,
-        BarColumn, TextColumn, TimeElapsedColumn, TimeRemainingColumn, MofNCompleteColumn,
+        BarColumn, TextColumn, SpinnerColumn,
+        TimeElapsedColumn, TimeRemainingColumn, MofNCompleteColumn,
+        TaskID
     )
     from .progress_bar import ProgressManager, ProgressClient
 
-    class CliLMPipeIInterface(LMPipeInterface):
+    class CliLMPipeInterface(LMPipeInterface):
 
+        src_dst_iter_task_id: TaskID | None = None
         def configure_src_dst_iterator(self, src_dst_iter: Iterable[SrcDst]) -> Iterable[SrcDst]:
-            task_id = self._progress_client.run_progress_method(
+            self._progress_client.run_progress_method(
+                self._src_dst_progress_id,
+                Progress.start
+            )
+            if isinstance(src_dst_iter, Sized):
+                total = len(src_dst_iter)
+            else:
+                total = None
+            self.src_dst_iter_task_id = self._progress_client.run_progress_method(
                 self._src_dst_progress_id,
                 Progress.add_task,
-                'Searching Samples ...'
+                '[green bold]Searching Samples ...[/green bold]',
+                total=total
             )
             for src_dst in src_dst_iter:
                 self._progress_client.run_progress_method(
                     self._src_dst_progress_id,
                     Progress.advance,
-                    task_id,
+                    self.src_dst_iter_task_id,
                 )
                 yield src_dst
             self._progress_client.run_progress_method(
                 self._src_dst_progress_id,
-                Progress.remove_task,
-                task_id,
+                Progress.update,
+                self.src_dst_iter_task_id,
+                description='[green bold]Search Completed.[/green bold]'
+            )
+            self._progress_client.run_progress_method(
+                self._src_dst_progress_id,
+                Progress.stop_task,
+                self.src_dst_iter_task_id,
+            )
+            self.src_dst_iter_task_id = None
+            self._progress_client.run_progress_method(
+                self._src_dst_progress_id,
+                Progress.stop
             )
 
+        batch_iter_task_id: TaskID | None = None
         def configure_batch_iterator[T](self, batch_map: Iterator[T]) -> Iterator[T]:
-            task_id = self._progress_client.run_progress_method(
+            self._progress_client.run_progress_method(
+                self._batch_progress_id,
+                Progress.start
+            )
+            if isinstance(batch_map, Sized):
+                total = len(batch_map)
+            else:
+                total = None
+            self.batch_iter_task_id = self._progress_client.run_progress_method(
                 self._batch_progress_id,
                 Progress.add_task,
-                'Processing Samples ...'
+                '[green bold]Processing Samples ...[/green bold]',
+                total=total
             )
             for batch in batch_map:
                 self._progress_client.run_progress_method(
                     self._batch_progress_id,
                     Progress.advance,
-                    task_id,
+                    self.batch_iter_task_id,
                 )
                 yield batch
             self._progress_client.run_progress_method(
                 self._batch_progress_id,
-                Progress.remove_task,
-                task_id,
+                Progress.update,
+                self.batch_iter_task_id,
+                description='[green bold]Processing Completed.[/green bold]'
+            )
+            self._progress_client.run_progress_method(
+                self._batch_progress_id,
+                Progress.stop_task,
+                self.batch_iter_task_id,
+            )
+            self.batch_iter_task_id = None
+            self._progress_client.run_progress_method(
+                self._batch_progress_id,
+                Progress.stop
             )
 
+        sample_iter_task_id: TaskID | None = None
         def configure_sample_iterator[T](self, sample_map: Iterator[T]) -> Iterator[T]:
-            task_id = self._progress_client.run_progress_method(
+            self._progress_client.run_progress_method(
+                self._sample_progress_id,
+                Progress.start
+            )
+            if isinstance(sample_map, Sized):
+                total = len(sample_map)
+            else:
+                total = None
+            self.sample_iter_task_id = self._progress_client.run_progress_method(
                 self._sample_progress_id,
                 Progress.add_task,
-                'Processing Frames ...'
+                'Processing Frames ...',
+                total=total,
             )
             for sample in sample_map:
                 self._progress_client.run_progress_method(
                     self._sample_progress_id,
                     Progress.advance,
-                    task_id,
+                    self.sample_iter_task_id,
                 )
                 yield sample
             self._progress_client.run_progress_method(
                 self._sample_progress_id,
-                Progress.remove_task,
-                task_id,
+                Progress.update,
+                self.sample_iter_task_id,
+                description='[green bold]Processing Completed.[/green bold]'
+            )
+            self._progress_client.run_progress_method(
+                self._sample_progress_id,
+                Progress.stop_task,
+                self.sample_iter_task_id,
+            )
+            self.sample_iter_task_id = None
+            self._progress_client.run_progress_method(
+                self._sample_progress_id,
+                Progress.stop
             )
 
         def __init__(self, estimator: Estimator, **options: Unpack[LMPipeOptionsPartial]):
@@ -180,11 +253,16 @@ def main():
 
             # マネージャーのシリアライズを防ぐため
             # クライアントのみを保持する
-            self._progress_client: ProgressClient = ProgressManager().get_client()
+            self._progress_client: ProgressClient = (
+                ProgressManager()
+                    .start()
+                    .get_client()
+            )
 
             self._src_dst_progress_id = self._progress_client.run_progress_init(
                 Progress,
-                TextColumn("[bold blue]{task.description:<24}</bold blue>"),
+                TextColumn("{task.description:<24}"),
+                SpinnerColumn(),
                 BarColumn(),
                 MofNCompleteColumn(),
                 TimeElapsedColumn(),
@@ -193,7 +271,8 @@ def main():
 
             self._batch_progress_id = self._progress_client.run_progress_init(
                 Progress,
-                TextColumn("[bold green]{task.description:<24}</bold green>"),
+                TextColumn("{task.description:<24}"),
+                SpinnerColumn(),
                 BarColumn(),
                 MofNCompleteColumn(),
                 TimeElapsedColumn(),
@@ -202,34 +281,124 @@ def main():
 
             self._sample_progress_id = self._progress_client.run_progress_init(
                 Progress,
-                TextColumn("[bold magenta]{task.description:<24}</bold magenta>"),
+                TextColumn("{task.description:<24}"),
+                SpinnerColumn(),
                 BarColumn(),
                 MofNCompleteColumn(),
                 TimeElapsedColumn(),
                 TimeRemainingColumn(),
             )
 
+        @shutdown_listener
+        def _shutdown_listener(self):
+            if self.src_dst_iter_task_id is not None:
+                print("Shutting down src_dst_iter_task")
+                self._progress_client.run_progress_method(
+                    self._src_dst_progress_id,
+                    Progress.update,
+                    self.src_dst_iter_task_id,
+                    description='[red bold]Interrupted.[/red bold]'
+                )
+                self._progress_client.run_progress_method(
+                    self._src_dst_progress_id,
+                    Progress.stop_task,
+                    self.src_dst_iter_task_id
+                )
+                self.src_dst_iter_task_id = None
+            if self.batch_iter_task_id is not None:
+                print("Shutting down batch_iter_task")
+                self._progress_client.run_progress_method(
+                    self._batch_progress_id,
+                    Progress.update,
+                    self.batch_iter_task_id,
+                    description='[red bold]Interrupted.[/red bold]'
+                )
+                self._progress_client.run_progress_method(
+                    self._batch_progress_id,
+                    Progress.stop_task,
+                    self.batch_iter_task_id
+                )
+                self.batch_iter_task_id = None
+            if self.sample_iter_task_id is not None:
+                print("Shutting down sample_iter_task")
+                self._progress_client.run_progress_method(
+                    self._sample_progress_id,
+                    Progress.update,
+                    self.sample_iter_task_id,
+                    description='[red bold]Interrupted.[/red bold]'
+                )
+                self._progress_client.run_progress_method(
+                    self._sample_progress_id,
+                    Progress.stop_task,
+                    self.sample_iter_task_id
+                )
+                self.sample_iter_task_id = None
+            self._progress_client.manager.stop()
 
-    pipeline = CliLMPipeIInterface(
-        estimator=root_estimator,
-        landmarks_matrix_save_format=global_args.lmpipe_options.landmarks_matrix_save_format,
-        annotated_frames_show_format=global_args.lmpipe_options.annotated_frames_show_format,
-        annotated_frames_save_format=global_args.lmpipe_options.annotated_frames_save_format,
-        annotated_frames_save_width=global_args.lmpipe_options.annotated_frames_save_width,
-        annotated_frames_save_height=global_args.lmpipe_options.annotated_frames_save_height,
-        annotated_frames_save_fps=global_args.lmpipe_options.annotated_frames_save_fps,
-        annotated_frames_save_fourcc=global_args.lmpipe_options.annotated_frames_save_fourcc,
-        max_workers=global_args.lmpipe_options.max_workers,
-        executor_mode=global_args.lmpipe_options.executor_mode,
-    )
+        def _sample_executor_initializer(self):
 
-    pipeline.run(
-        src=global_args.src,
-        dst=global_args.dst,
-    )
+            if self._main_tid != get_ident():
+                return super()._sample_executor_initializer()
+
+            import os
+            import signal
+            from types import FrameType
+            def forward_sigint_to_main_process(
+                signum: int,
+                frame: FrameType | None
+                ):
+                os.kill(self._main_pid, signal.SIGINT)
+
+            # 子プロセスでのSIGINTはメインプロセスに転送する
+            signal.signal(signal.SIGINT, forward_sigint_to_main_process)
+
+            # Protobufの非推奨警告を抑制
+            import warnings
+            warnings.filterwarnings(
+                'ignore',
+                message=r'.*SymbolDatabase\.GetPrototype\(\) is deprecated.*',
+                category=UserWarning,
+                module=r'google\.protobuf\.symbol_database'
+            )
+
+            return super()._sample_executor_initializer() 
+
+    from rich.traceback import install
+    install(code_width=shutil.get_terminal_size().columns)
+
+    print("Initializing LMPipe Interface ...")
+    try:
+        pipeline = CliLMPipeInterface(
+            estimator=root_estimator,
+            landmarks_matrix_save_format=global_args.lmpipe_options.landmarks_matrix_save_format,
+            annotated_frames_show_format=global_args.lmpipe_options.annotated_frames_show_format,
+            annotated_frames_save_format=global_args.lmpipe_options.annotated_frames_save_format,
+            annotated_frames_save_width=global_args.lmpipe_options.annotated_frames_save_width,
+            annotated_frames_save_height=global_args.lmpipe_options.annotated_frames_save_height,
+            annotated_frames_save_fps=global_args.lmpipe_options.annotated_frames_save_fps,
+            annotated_frames_save_fourcc=global_args.lmpipe_options.annotated_frames_save_fourcc,
+            max_workers=global_args.lmpipe_options.max_workers,
+            executor_mode=global_args.lmpipe_options.executor_mode,
+        )
+    except KeyboardInterrupt:
+        print("KeyboardInterrupt")
+        exit(1)
+    print("Initialization Done.")
+
+    print("Running LMPipe Pipeline ...")
+    try:
+        pipeline.run(
+            src=global_args.src,
+            dst=global_args.dst,
+        )
+    except KeyboardInterrupt:
+        print("KeyboardInterrupt")
+        exit(1)
+
+    print("Pipeline Finished.")
 
 if __name__ == "__main__":
-
+    freeze_support()
     main()
 
     

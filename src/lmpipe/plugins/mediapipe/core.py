@@ -3,6 +3,8 @@ import requests
 from ...estimator import Estimator
 from .args import CommonArgs
 
+from mediapipe.tasks.python.components.containers.landmark import NormalizedLandmark # pyright: ignore[reportMissingTypeStubs]
+
 MODELS = {
     "pose": {
         "lite": "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task",
@@ -52,6 +54,18 @@ from mediapipe.tasks.python.core.base_options import BaseOptions # pyright: igno
 from mediapipe.tasks.python.vision.core.vision_task_running_mode import VisionTaskRunningMode # pyright: ignore[reportMissingTypeStubs]
 
 class MediaPipeEstimator(Estimator):
+
+    MEDIAPIPE_CHANNELS = 4
+    def _get_array_from_landmarks(
+        self,
+        lm: NormalizedLandmark,
+        ) -> list[float]:
+        return [
+            lm.x or self.missing_value,
+            lm.y or self.missing_value,
+            lm.z or self.missing_value,
+            max(0.0, (lm.visibility or 0.0) * (lm.presence or 0.0))
+        ]
 
     def __init__(self, common_args: CommonArgs.T = CommonArgs.T()):
 

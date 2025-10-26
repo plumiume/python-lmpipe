@@ -1,10 +1,18 @@
-from typing import Unpack, Iterable, Iterator, Callable, Concatenate, Self, Literal
+from typing import (
+    Unpack, Iterable, Iterator, Callable, Concatenate, Self, Literal,
+    Generator,
+    Protocol, runtime_checkable
+)
+import os
+import sys
 from itertools import repeat, count
 from functools import wraps
+from contextlib import contextmanager
 from queue import Queue
 from pathlib import Path
 from threading import local, get_ident, Thread
 from enum import Enum
+import signal
 from multiprocessing import cpu_count
 from concurrent.futures import Executor, Future
 from weakref import WeakValueDictionary
@@ -34,12 +42,58 @@ class _Local(local):
 class _SentinelType(Enum):
     SENTINEL = 0
 
-
 def dummy(*args: object, **kwargs: object): pass
+
+def shutdown_listener[S: 'LMPipeInterface'](
+    listener: Callable[[S], None]
+    ) -> Callable[[S], None]:
+    setattr(listener, '_is_shutdown_listener', True)
+    return listener
+
+@contextmanager
+def suppress_stdout_stderr():
+    devnull = open(os.devnull, 'w')
+    saved_stdout = (os.dup(1), sys.stdout)
+    saved_stderr = (os.dup(2), sys.stderr)
+    os.dup2(devnull.fileno(), 1)
+    os.dup2(devnull.fileno(), 2)
+    sys.stdout = devnull
+    sys.stderr = devnull
+    try:
+        yield
+    finally:
+        os.dup2(saved_stdout[0], 1)
+        os.dup2(saved_stderr[0], 2)
+        sys.stdout = saved_stdout[1]
+        sys.stderr = saved_stderr[1]
+        devnull.close()
 
 _local = _Local()
 
-class LMPipeInterface:
+@runtime_checkable
+class _LMPipeInterfaceCallback(Protocol):
+    def __call__(_self, self: 'LMPipeInterface') -> object: ...
+
+class _LMPipeInterfaceMeta(type):
+
+    shutdown_listener_registry: set[_LMPipeInterfaceCallback] = set()
+
+    def __init__(self, name: str, bases: tuple[type, ...], namespace: dict[str, object]):
+
+        self.shutdown_listener_registry = set(
+            func for func in namespace.values()
+            if getattr(func, '_is_shutdown_listener', False)
+            and isinstance(func, _LMPipeInterfaceCallback)
+        )
+
+        for base_cls in bases:
+            if not isinstance(base_cls, _LMPipeInterfaceMeta):
+                continue
+            self.shutdown_listener_registry.update(
+                base_cls.shutdown_listener_registry
+            )
+
+class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
 
     ## Serialize
 
@@ -72,6 +126,8 @@ class LMPipeInterface:
         """
 
         self._main_id = id(self)
+        self._main_pid = os.getpid()
+        self._main_tid = get_ident()
         _local.wv_pipelines[self._main_id] = self
         self._current_sample_id = -1
 
@@ -91,16 +147,33 @@ class LMPipeInterface:
         
         @wraps(func)
         def wrapper(self: S, *args: P.args, **kwargs: P.kwargs) -> R:
+
+            keyboard_interrupt: KeyboardInterrupt | None = None
             try:
                 return func(self, *args, **kwargs)
-            except KeyboardInterrupt:
-                if self._sample_executor is not None:
-                    self._sample_executor.shutdown(wait=False, cancel_futures=True)
-                if self._batch_executor is not None:
-                    self._batch_executor.shutdown(wait=False, cancel_futures=True)
-                raise
+            except KeyboardInterrupt as e:
+                keyboard_interrupt = e
+
+            original_handler = signal.getsignal(signal.SIGINT)
+
+            signal.signal(signal.SIGINT, signal.SIG_IGN)
+            for listener in type(self).shutdown_listener_registry:
+                try:
+                    listener(self)
+                except Exception as e:
+                    print(f"Error during shutdown listener: {e}")
+            signal.signal(signal.SIGINT, original_handler)
+
+            raise keyboard_interrupt
 
         return wrapper
+
+    @shutdown_listener
+    def _default_shutdown_listener(self):
+        if self._batch_executor is not None:
+            self._batch_executor.shutdown(wait=True, cancel_futures=True)
+        if self._sample_executor is not None:
+            self._sample_executor.shutdown(wait=True, cancel_futures=True)
 
     ## Public Methods
 
@@ -278,19 +351,25 @@ class LMPipeInterface:
     # batch executor holder
     def _run_batch(self, src_dst: SrcDst, options: LMPipeOptions):
 
+        def exp_handler(ex: Exception):
+            print(f"Exception in batch processing: {ex}", file=sys.stderr)
+
         batch_executor = self._get_batch_executor(options)
 
         run_sample = self._with_handle_exceptions(
             self._with_thread_local(
                 self.__class__._run_sample
             ),
-            handler=lambda ex: None
+            handler=exp_handler
+            # handler=lambda ex: None
+        )
+
+        background_src_dst_gen = self._background_iterate(
+            self._src_dst_generator(src_dst)
         )
 
         src_dst_iter = self.configure_src_dst_iterator(
-            self._background_iterate(
-                self._src_dst_generator(src_dst)
-            )
+            background_src_dst_gen
         )
 
         batch_map = batch_executor.map(
@@ -427,27 +506,33 @@ class LMPipeInterface:
 
     def _process_frame(self, frame_src: MatLike | None, frame_idx: int, sample_idx: int) -> ProcessFrameResult:
 
-        self._estimator_setup()
-        self._estimator_setup = dummy
+        try:
+            with suppress_stdout_stderr():
 
-        if self._current_sample_id != sample_idx:
-            self._current_sample_id = sample_idx
-            self.estimator.on_before_estimate(object())
+                self._estimator_setup()
+                self._estimator_setup = dummy
 
-        landmarks = self.estimator.estimate(frame_src, frame_idx)
+                if self._current_sample_id != sample_idx:
+                    self._current_sample_id = sample_idx
+                    self.estimator.on_before_estimate(object())
 
-        if frame_src is None:
-            annotated_frame = frame_src
-        else:
-            annotated_frame = self.estimator.annotate(frame_src, frame_idx, landmarks)
+                landmarks = self.estimator.estimate(frame_src, frame_idx)
 
-        return ProcessFrameResult(
-            frame_idx=frame_idx,
-            headers=self.estimator.headers,
-            landmarks=landmarks,
-            annotated_frame=annotated_frame,
-            thread_ident=get_ident()
-        )
+                if frame_src is None:
+                    annotated_frame = frame_src
+                else:
+                    annotated_frame = self.estimator.annotate(frame_src, frame_idx, landmarks)
+
+                return ProcessFrameResult(
+                    frame_idx=frame_idx,
+                    headers=self.estimator.headers,
+                    landmarks=landmarks,
+                    annotated_frame=annotated_frame,
+                    thread_ident=get_ident()
+                )
+
+        except Exception as e:
+            raise e
 
 
     ### helpers
@@ -688,7 +773,6 @@ class LMPipeInterface:
     def _sample_executor_initializer(self):
         _local.wv_pipelines.setdefault(self._main_id, self)
 
-
     class _with_handle_exceptions[**P, R, E]:
         def __init__(self, func: Callable[P, R], handler: Callable[[Exception], E] = lambda ex: ex):
             self.func = func
@@ -813,13 +897,16 @@ class LMPipeInterface:
 
             raise ValueError
 
-    def _background_iterate[T](self, iterable: Iterable[T], maxsize: int = 0) -> Iterable[T]:
+    def _background_iterate[T](self, iterable: Iterable[T], maxsize: int = 0) -> Generator[T, None, int]:
 
         q: "Queue[T | Literal[_SentinelType.SENTINEL]]" = Queue(maxsize=maxsize)
 
+        ftr = Future[int]()
+
         thread = Thread(
             target=self._background_iterate_impl,
-            args=(iterable, q),
+            args=(iterable, q, ftr),
+            daemon=True
         )
         
         thread.start()
@@ -832,8 +919,18 @@ class LMPipeInterface:
 
         thread.join()
 
-    def _background_iterate_impl[T](self, iterable: Iterable[T], q: "Queue[T | Literal[_SentinelType.SENTINEL]]"):
+        return ftr.result()
 
-        for item in iterable:
+    def _background_iterate_impl[T](
+        self,
+        iterable: Iterable[T],
+        q: "Queue[T | Literal[_SentinelType.SENTINEL]]",
+        ftr: Future[int]
+        ):
+
+        idx: int = 0
+        for idx, item in enumerate(iterable):
             q.put(item)
         q.put(_SentinelType.SENTINEL)
+
+        ftr.set_result(idx)

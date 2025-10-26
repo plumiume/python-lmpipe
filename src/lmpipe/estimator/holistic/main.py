@@ -17,6 +17,8 @@ class HolisticPartEstimator(Estimator, ABC):
 
 class HolisticPoseEstimator(HolisticPartEstimator, ABC):
 
+    
+
     @abstractmethod
     def left_hand_clipfn(
         self,
@@ -61,6 +63,12 @@ class HolisticEstimator(Estimator):
         self.left_hand_estimator: HolisticPartEstimator | None = left_hand_estimator
         self.right_hand_estimator: HolisticPartEstimator | None = right_hand_estimator
         self.face_estimator: HolisticPartEstimator | None = face_estimator
+
+        self.dim_indices: list[int] = [0, 1]
+        if 'z' in self.holistic_args.extra_dims:
+            self.dim_indices.append(2)
+        if 'c' in self.holistic_args.extra_dims:
+            self.dim_indices.append(3)
 
     def setup(self):
 
@@ -175,16 +183,16 @@ class HolisticEstimator(Estimator):
 
             landmarks = estimator.estimate(cliped, frame_idx)
 
-            sloop = np.array([right - left, bottom - top, 1], dtype=np.float32)
-            y_inter = np.array([left, top, 0], dtype=np.float32)
-            slaling = np.array([frame_src.shape[1], frame_src.shape[0], 1], dtype=np.float32)
+            sloop = np.array([right - left, bottom - top, 1, 1], dtype=np.float32)
+            y_inter = np.array([left, top, 0, 0], dtype=np.float32)
+            slaling = np.array([frame_src.shape[1], frame_src.shape[0], 1, 1], dtype=np.float32)
             new_landmarks = (landmarks * sloop + y_inter) / slaling
 
             ret_landmarks.append(new_landmarks)
 
         ret_landmarks = np.concatenate(ret_landmarks, 0)
 
-        return ret_landmarks[:, :self.holistic_args.dimensions - 1]
+        return ret_landmarks[:, self.dim_indices]
 
     @annotate
     def annotate(

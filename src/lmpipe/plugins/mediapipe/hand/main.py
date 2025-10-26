@@ -80,7 +80,7 @@ class MediaPipeHandEstimator(MediaPipeEstimator, HolisticPartEstimator):
 
     @property
     def shape(self) -> tuple[int, int]:
-        return (len(HandNames), 3)
+        return (len(HandNames), 4)
 
     @estimate
     def estimate(self, frame_src: MatLike, idx: int) -> NDArrayFloat | None:
@@ -109,13 +109,13 @@ class MediaPipeHandEstimator(MediaPipeEstimator, HolisticPartEstimator):
 
         if primary_landmarks is not None:
             return np.array([
-                [lm.x, lm.y, lm.z]
+                self._get_array_from_landmarks(lm)
                 for lm in primary_landmarks
             ])
 
         if secondary_landmarks is not None:
             return np.array([
-                [lm.x, lm.y, lm.z]
+                self._get_array_from_landmarks(lm)
                 for lm in secondary_landmarks
             ])
 

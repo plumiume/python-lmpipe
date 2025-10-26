@@ -65,12 +65,12 @@ def estimate[E: Estimator](
         ) -> NDArrayFloat:
 
         if frame_src is None:
-            return np.full(self.shape, np.nan)
+            return self.configure_missing_array()
 
         landmarks = func(self, frame_src, frame_idx)
 
         if landmarks is None:
-            return np.full(self.shape, np.nan)
+            return self.configure_missing_array()
 
         return np.asarray(landmarks)
 
@@ -113,7 +113,11 @@ def annotate[E: Estimator](
 
 class Estimator(ABC):
 
+    missing_value: float = np.nan
+    "Value used to indicate missing landmarks."
+
     lmpipe_options: LMPipeOptions = DEFAULT_LMPIPE_OPTIONS
+    "LMPipe options associated with this estimator."
 
     @property
     @abstractmethod
@@ -255,7 +259,6 @@ class Estimator(ABC):
         """
         pass
 
-
     def on_before_estimate(self, info: Any):
         """
         Optional hook method called before each estimation.
@@ -274,7 +277,6 @@ class Estimator(ABC):
         """
         pass
 
-
     def on_after_estimate(self, info: Any):
         """
         Optional hook method called after each estimation.
@@ -291,3 +293,15 @@ class Estimator(ABC):
         Default implementation does nothing.
         """
         pass
+
+    @cache
+    def configure_missing_array(self):
+        """Configure the missing array for landmark estimation.
+
+        This method creates a missing array filled with the missing value for each landmark.
+        The missing value is used to indicate the absence of a landmark in the estimation.
+
+        Returns:
+            NDArrayFloat: An array filled with the missing value for each landmark.
+        """
+        return np.full(self.shape, self.missing_value)

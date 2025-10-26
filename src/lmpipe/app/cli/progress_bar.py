@@ -1,11 +1,15 @@
-from typing import Any, Callable, Concatenate, Literal, Self, Iterator
+from typing import (
+    Any, Callable, Concatenate, Literal, Self, Iterator, TypeGuard,
+    NoReturn
+)
+from dataclasses import dataclass
 from contextlib import contextmanager
 from enum import Enum, IntEnum, auto
 from os import getpid
 import pickle
-from threading import local, Thread, get_ident
+from threading import Thread, get_ident
 from multiprocessing import Queue
-from multiprocessing.context import assert_spawning
+from multiprocessing.context import get_spawning_popen, assert_spawning
 from rich.progress import (
     Progress,
 )
@@ -20,7 +24,19 @@ class _SingletonEnum(Enum):
 type _NA_T = Literal[_SingletonEnum.NA]
 _NA = _SingletonEnum.NA
 
-class _MapItem[R]:
+def _is_queue(obj: object) -> TypeGuard['Queue[Any]']:
+    return isinstance(obj, Queue)
+
+class _ReprMixin: # for _*Item classes
+    def __repr__(self) -> str:
+        cls_name = self.__class__.__name__
+        attrs = ', '.join(
+            f"{k}={v!r}"
+            for k, v in self.__dict__.items()
+        )
+        return f"{cls_name}({attrs})"
+
+class _MapItem[R](_ReprMixin):
     def __init__(
         self,
         progress_id: _ProgressId,
@@ -35,10 +51,11 @@ class _MapItem[R]:
         self.result = result
         self.exception = exception
 
-class _InitFunc[**P]:
+class _InitFunc[**P](_ReprMixin):
     def __init__(
         self,
         func: Callable[P, Progress],
+        /, # Prevent namespace collision with kwargs
         *args: P.args,
         **kwargs: P.kwargs
         ):
@@ -48,11 +65,12 @@ class _InitFunc[**P]:
     def __call__(self) -> Progress:
         return self.func(*self.args, **self.kwargs)
 
-class _MethodFunc[**P, R]:
+class _MethodFunc[**P, R](_ReprMixin):
     def __init__(
         self,
         progress_id: _ProgressId,
         func: Callable[Concatenate[Progress, P], R],
+        /, # Prevent namespace collision with kwargs
         *args: P.args,
         **kwargs: P.kwargs,
         ):
@@ -71,6 +89,37 @@ class _ReduceItem[R]:
         ):
         self.worker_id = worker_id
         self.func = func
+
+class _NeedsRestoreDescriptor[T]:
+    def __init__(self, name: str, validation: Callable[[object], TypeGuard[T]]):
+        self.name = name
+        self.validation = validation
+    def __get__(self, instance: object | None, owner: type) -> NoReturn:
+        raise AttributeError(
+            f"{self.name} must be restored after deserialization"
+        )
+    def __set__(self, obj: object, value: object):
+        if not self.validation(value):
+            raise TypeError(
+                f"{self.name} must be of "
+                f"type {self.validation.__annotations__['return']}"
+            )
+        obj.__dict__[self.name] = value
+
+@dataclass
+class _ProgressManagerSpawningContext:
+
+    reduce_q: 'Queue[_ReduceItem[Any] | None]'
+    map_qs: dict[_WorkerId, 'Queue[_MapItem[Any]]']
+
+    @classmethod
+    def override_state(cls, state: dict[str, Any]) -> dict[str, Any]:
+        return {
+            'reduce_q': _NeedsRestoreDescriptor(
+                'reduce_q', _is_queue
+            ),
+            'map_qs': {},
+        }
 
 class ProgressManagerState(IntEnum):
     INITIALIZED = auto()
@@ -93,6 +142,7 @@ class ProgressManager:
     """
 
     _next_id: _ManagerId = 0
+    _with_client: bool = False
 
     def __init__(self):
 
@@ -168,6 +218,24 @@ class ProgressManager:
         self.manager_thread.join()
         self._state = ProgressManagerState.STOPPED
 
+    @property
+    def manager_state(self) -> ProgressManagerState:
+        """Get the current state of the ProgressManager.
+
+        Returns:
+            ProgressManagerState: The current state of the ProgressManager.
+        """
+        return self._state
+
+    @property
+    def manager_id(self) -> _ManagerId:
+        """Get the unique ID of the ProgressManager.
+
+        Returns:
+            _ManagerId: The unique ID of the ProgressManager.
+        """
+        return self._id
+
     def _manager_thread_fn(self):
 
         while True:
@@ -176,6 +244,7 @@ class ProgressManager:
 
             # Shutdown signal
             if reduce_item is None:
+                self._state = ProgressManagerState.STOPPED
                 break
 
             if reduce_item.worker_id not in self._map_qs:
@@ -190,7 +259,21 @@ class ProgressManager:
                 map_item = self._handle_init_func(reduce_item.func)
             else:
                 map_item = self._handle_method_func(reduce_item.func)
-            self._map_qs[reduce_item.worker_id].put(map_item)
+
+            try:
+                self._map_qs[reduce_item.worker_id].put(map_item)
+            except pickle.PicklingError:
+                self._map_qs[reduce_item.worker_id].put(
+                    _MapItem(
+                        progress_id=map_item.progress_id,
+                        exception=RuntimeError(
+                            f"{self._fqn}: Failed to pickle MapItem "
+                            "for worker ID "
+                            f"{reduce_item.worker_id}. "
+                            "Ensure that all results are picklable."
+                        )
+                    )
+                )
 
     def _handle_init_func(self, func: _InitFunc[...]) -> _MapItem[Any]:
         try:
@@ -198,7 +281,7 @@ class ProgressManager:
         except Exception as e:
             return _MapItem(progress_id=-1, exception=e)
         progress_id = self._register_progress(progress)
-        return _MapItem(progress_id=progress_id, result=progress)
+        return _MapItem(progress_id=progress_id)
 
     def _handle_method_func(self, func: _MethodFunc[..., Any]) -> _MapItem[Any]:
         progress_id = self._val_progress_id(func.progress_id)
@@ -240,6 +323,8 @@ class ProgressManager:
 
     ########################## Worker Process Methods ##########################
 
+    _next_worker_id: _WorkerId = 0
+
     def get_client(self) -> "ProgressClient":
         """Get a ProgressClient instance.
 
@@ -263,87 +348,116 @@ class ProgressManager:
             - ProgressClient operates as a singleton within the same thread
             - Handoff to worker processes is performed via ProgressClient
         """
-        return ProgressClient(self)
+        client = ProgressClient(self, self._next_worker_id)
+        print(f"Assigned Worker ID {self._next_worker_id} to ProgressClient.")
+        self._next_worker_id += 1
+        return client
 
     @contextmanager
-    def _serialize_with_client(self, client: "ProgressClient") -> Iterator[Self]:
+    def _serialize_with_client(self, client: "ProgressClient") -> Iterator[_ProgressManagerSpawningContext]:
         self._with_client = True
-        yield self
+        yield _ProgressManagerSpawningContext(
+            reduce_q=self._reduce_q,
+            map_qs=self._map_qs,
+        )
         self._with_client = False
 
+    def _store_spawning_context(self, context: _ProgressManagerSpawningContext):
+        self._reduce_q = context.reduce_q
+        self._map_qs = context.map_qs
+
     def __getstate__(self) -> dict[str, Any]:
+
         if not self._with_client:
             raise RuntimeError(
                 f"ProgressManager can only be serialized via ProgressClient"
             )
-        assert_spawning(self)
-        return {
+
+        state: dict[str, Any] = {
             **self.__dict__,
-            'manager_thread': None,  # Threadはシリアライズできない
+            'manager_thread': None,
+            '_progress_registry': {},
         }
 
+        if self._with_client:
+            state['_is_serialized_without_mp_spawning'] = True
+            _ProgressManagerSpawningContext.override_state(state)
+
+        return state
+
     def __setstate__(self, state: dict[str, Any]) -> None:
+
         self.__dict__.update(state)
         self._with_client = False
 
+        if state.get('_is_serialized_without_mp_spawning', False):
+            if get_spawning_popen() is not None:
+                raise RuntimeError(
+                    "ProgressManager was serialized in a non-multiprocessing context, "
+                    "and must be deserialized in the same context."
+                )
+        else:
+            assert_spawning(self) # !!! multiprocessing context check !!!
+
 class ProgressClient:
 
-    class _ThreadContext(local):
-        def __init__(
-            self,
-            worker_id: _WorkerId,
-            instancies: dict[tuple[_ManagerId, _WorkerId], 'ProgressClient'],
-            ):
-            self.worker_id = worker_id
-            self.instancies = instancies
-        def __reduce__(self):
-            return (self.__class__, (self.worker_id, self.instancies))
+    _manager: ProgressManager
+    _map_q: 'Queue[_MapItem[Any]]'
+    _worker_id: _WorkerId
+    _instancies: dict[tuple[_ManagerId, _WorkerId], 'ProgressClient'] = {}
 
-    _context = _ThreadContext(get_ident(), {})
+    def __reduce__(self):
+        state = self.__getstate__()
+        print(f"Serializing ProgressClient with state: {state}")
+        return (super().__new__, (self.__class__,), self.__getstate__())
 
-    def __new__(cls, manager: ProgressManager):
+    def __new__(cls, manager: ProgressManager, worker_id: _WorkerId) -> Self:
 
-        this_pid = getpid()
-        this_tid = get_ident()
+        self = cls._instancies.get((manager.manager_id, worker_id))
 
-        if (
-            this_pid != manager.constructed_this_pid
-            or this_tid != manager.constructed_this_tid
-            ):
-            raise RuntimeError(
-                "ProgressClient can only be instantiated "
-                "in the same process and thread as its ProgressManager"
-            )
+        if isinstance(self, cls):
+            return self
 
-        return cls._context.instancies.setdefault(
-            (cls._get_manager_id(manager), this_tid),
-            super().__new__(cls)
-        )
+        self = super().__new__(cls)
+        self._instancies[(manager.manager_id, worker_id)] = self
 
-    def __init__(self, manager: ProgressManager):
+        self._worker_id = worker_id
+        self._manager = manager
+        self._map_q = manager._register_worker(worker_id) # pyright: ignore[reportPrivateUsage]
 
-        self._manager: ProgressManager = manager
-        self._worker_id = self._context.worker_id
-
-        self._map_q = manager._register_worker(self._worker_id) # pyright: ignore[reportPrivateUsage]
+        return self
 
     def __getstate__(self) -> dict[str, Any]:
-        with self._manager._serialize_with_client(self): # pyright: ignore[reportPrivateUsage]
+        with self._manager._serialize_with_client( # pyright: ignore[reportPrivateUsage]
+            self
+            ) as spawning_context:
             pre_serialized_manager = pickle.dumps(self._manager)
         return {
             **self.__dict__,
             '_manager': pre_serialized_manager,
+            'spawning_context': spawning_context,
         }
 
     def __setstate__(self, state: dict[str, Any]) -> None:
+        spawning_context = state.pop('spawning_context', None)
         self.__dict__.update(state)
         self._manager = pickle.loads(state['_manager'])
+        if spawning_context is not None:
+            self._manager._store_spawning_context( # pyright: ignore[reportPrivateUsage]
+                spawning_context
+            )
 
     def _remote[R](
         self,
         reduce_item: _ReduceItem[R],
         throw: bool = True
     ) -> _MapItem[R]:
+
+        if self._manager.manager_state != ProgressManagerState.STARTED:
+            raise RuntimeError(
+                "ProgressManager is not started. "
+                "Cannot perform remote operations."
+            )
 
         self._reduce_q.put(reduce_item)
         map_item = self._map_q.get()
@@ -352,10 +466,6 @@ class ProgressClient:
             raise map_item.exception
 
         return map_item
-
-    @classmethod
-    def _get_manager_id(cls, manager: ProgressManager) -> _ManagerId:
-        return manager._id # pyright: ignore[reportPrivateUsage]
 
     @property
     def _reduce_q(self) -> 'Queue[_ReduceItem[Any] | None]':
@@ -388,17 +498,10 @@ class ProgressClient:
 
         reduce_item = _ReduceItem[Any](
             worker_id=self._worker_id,
-            func=_InitFunc(
-                func=init_like,
-                *args,
-                **kwargs,
-            )
+            func=_InitFunc(init_like, *args, **kwargs)
         )
 
         map_item = self._remote(reduce_item)
-
-        if map_item.exception is not None:
-            raise map_item.exception
 
         return map_item.progress_id
 
@@ -421,16 +524,11 @@ class ProgressClient:
         reduce_item = _ReduceItem(
             worker_id=self._worker_id,
             func=_MethodFunc(
-                progress_id=progress_id,
-                func=method_like,
-                *args,
-                **kwargs,
+                progress_id, method_like,
+                *args, **kwargs,
             )
         )
 
         map_item = self._remote(reduce_item)
-
-        if map_item.exception is not None:
-            raise map_item.exception
 
         return map_item.result

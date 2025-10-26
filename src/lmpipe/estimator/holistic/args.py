@@ -10,5 +10,5 @@ class HolisticArgs(mixin.ReprMixin):
     MediaPipe estimators.
     """
 
-    dimensions: Literal[2, 3] = 3
-    "The number of dimensions for the landmarks (2 or 3)."
+    extra_dims: list[Literal['z', 'c']] = ['z', 'c']
+    "Extra dimensions to include in the output landmarks."

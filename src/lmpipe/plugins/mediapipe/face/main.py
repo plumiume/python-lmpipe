@@ -52,7 +52,7 @@ class MediaPipeFaceEstimator(MediaPipeEstimator, HolisticPartEstimator):
 
     @property
     def shape(self) -> tuple[int, int]:
-        return (FACE_LANDMARKS_NUM, 3)
+        return (FACE_LANDMARKS_NUM, 4)
 
     @estimate
     def estimate(self, frame_src: MatLike, frame_idx: int) -> NDArrayFloat | None:
@@ -69,6 +69,6 @@ class MediaPipeFaceEstimator(MediaPipeEstimator, HolisticPartEstimator):
             return None
 
         return np.array([
-            [lm.x, lm.y, lm.z]
+            self._get_array_from_landmarks(lm)
             for lm in landmarks[0]
         ])
