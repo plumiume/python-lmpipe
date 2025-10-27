@@ -52,7 +52,6 @@ def shutdown_listener[S: 'LMPipeInterface'](
 
 @contextmanager
 def suppress_stdout_stderr():
-    devnull = open(os.devnull, 'w')
     saved_stdout = (os.dup(1), sys.stdout)
     saved_stderr = (os.dup(2), sys.stderr)
     os.dup2(devnull.fileno(), 1)
@@ -66,9 +65,9 @@ def suppress_stdout_stderr():
         os.dup2(saved_stderr[0], 2)
         sys.stdout = saved_stdout[1]
         sys.stderr = saved_stderr[1]
-        devnull.close()
 
 _local = _Local()
+devnull = open(os.devnull, 'w') # global devnull for suppress_stdout_stderr
 
 @runtime_checkable
 class _LMPipeInterfaceCallback(Protocol):

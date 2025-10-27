@@ -115,10 +115,10 @@ class _ProgressManagerSpawningContext:
     @classmethod
     def override_state(cls, state: dict[str, Any]) -> dict[str, Any]:
         return {
-            'reduce_q': _NeedsRestoreDescriptor(
-                'reduce_q', _is_queue
+            '_reduce_q': _NeedsRestoreDescriptor(
+                '_reduce_q', _is_queue
             ),
-            'map_qs': {},
+            '_map_qs': {},
         }
 
 class ProgressManagerState(IntEnum):
@@ -156,6 +156,7 @@ class ProgressManager:
         self._progress_registry: dict[_ProgressId, Progress] = {}
         self._next_progress_id = 0
 
+        # spawning context
         self._reduce_q: 'Queue[_ReduceItem[Any] | None]' = Queue()
         self._map_qs: dict[_WorkerId, 'Queue[_MapItem[Any]]'] = {}
 
@@ -349,7 +350,6 @@ class ProgressManager:
             - Handoff to worker processes is performed via ProgressClient
         """
         client = ProgressClient(self, self._next_worker_id)
-        print(f"Assigned Worker ID {self._next_worker_id} to ProgressClient.")
         self._next_worker_id += 1
         return client
 
@@ -381,7 +381,7 @@ class ProgressManager:
 
         if self._with_client:
             state['_is_serialized_without_mp_spawning'] = True
-            _ProgressManagerSpawningContext.override_state(state)
+            state.update(_ProgressManagerSpawningContext.override_state(state))
 
         return state
 
@@ -407,8 +407,6 @@ class ProgressClient:
     _instancies: dict[tuple[_ManagerId, _WorkerId], 'ProgressClient'] = {}
 
     def __reduce__(self):
-        state = self.__getstate__()
-        print(f"Serializing ProgressClient with state: {state}")
         return (super().__new__, (self.__class__,), self.__getstate__())
 
     def __new__(cls, manager: ProgressManager, worker_id: _WorkerId) -> Self:
@@ -432,6 +430,7 @@ class ProgressClient:
             self
             ) as spawning_context:
             pre_serialized_manager = pickle.dumps(self._manager)
+        
         return {
             **self.__dict__,
             '_manager': pre_serialized_manager,
@@ -440,6 +439,7 @@ class ProgressClient:
 
     def __setstate__(self, state: dict[str, Any]) -> None:
         spawning_context = state.pop('spawning_context', None)
+        
         self.__dict__.update(state)
         self._manager = pickle.loads(state['_manager'])
         if spawning_context is not None:

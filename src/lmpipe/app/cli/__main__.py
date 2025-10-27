@@ -207,45 +207,45 @@ def main():
                 Progress.stop
             )
 
-        sample_iter_task_id: TaskID | None = None
-        def configure_sample_iterator[T](self, sample_map: Iterator[T]) -> Iterator[T]:
-            self._progress_client.run_progress_method(
-                self._sample_progress_id,
-                Progress.start
-            )
-            if isinstance(sample_map, Sized):
-                total = len(sample_map)
-            else:
-                total = None
-            self.sample_iter_task_id = self._progress_client.run_progress_method(
-                self._sample_progress_id,
-                Progress.add_task,
-                'Processing Frames ...',
-                total=total,
-            )
-            for sample in sample_map:
-                self._progress_client.run_progress_method(
-                    self._sample_progress_id,
-                    Progress.advance,
-                    self.sample_iter_task_id,
-                )
-                yield sample
-            self._progress_client.run_progress_method(
-                self._sample_progress_id,
-                Progress.update,
-                self.sample_iter_task_id,
-                description='[green bold]Processing Completed.[/green bold]'
-            )
-            self._progress_client.run_progress_method(
-                self._sample_progress_id,
-                Progress.stop_task,
-                self.sample_iter_task_id,
-            )
-            self.sample_iter_task_id = None
-            self._progress_client.run_progress_method(
-                self._sample_progress_id,
-                Progress.stop
-            )
+        # sample_iter_task_id: TaskID | None = None
+        # def configure_sample_iterator[T](self, sample_map: Iterator[T]) -> Iterator[T]:
+        #     self._progress_client.run_progress_method(
+        #         self._sample_progress_id,
+        #         Progress.start
+        #     )
+        #     if isinstance(sample_map, Sized):
+        #         total = len(sample_map)
+        #     else:
+        #         total = None
+        #     self.sample_iter_task_id = self._progress_client.run_progress_method(
+        #         self._sample_progress_id,
+        #         Progress.add_task,
+        #         'Processing Frames ...',
+        #         total=total,
+        #     )
+        #     for sample in sample_map:
+        #         self._progress_client.run_progress_method(
+        #             self._sample_progress_id,
+        #             Progress.advance,
+        #             self.sample_iter_task_id,
+        #         )
+        #         yield sample
+        #     self._progress_client.run_progress_method(
+        #         self._sample_progress_id,
+        #         Progress.update,
+        #         self.sample_iter_task_id,
+        #         description='[green bold]Processing Completed.[/green bold]'
+        #     )
+        #     self._progress_client.run_progress_method(
+        #         self._sample_progress_id,
+        #         Progress.stop_task,
+        #         self.sample_iter_task_id,
+        #     )
+        #     self.sample_iter_task_id = None
+        #     self._progress_client.run_progress_method(
+        #         self._sample_progress_id,
+        #         Progress.stop
+        #     )
 
         def __init__(self, estimator: Estimator, **options: Unpack[LMPipeOptionsPartial]):
 
@@ -319,20 +319,20 @@ def main():
                     self.batch_iter_task_id
                 )
                 self.batch_iter_task_id = None
-            if self.sample_iter_task_id is not None:
-                print("Shutting down sample_iter_task")
-                self._progress_client.run_progress_method(
-                    self._sample_progress_id,
-                    Progress.update,
-                    self.sample_iter_task_id,
-                    description='[red bold]Interrupted.[/red bold]'
-                )
-                self._progress_client.run_progress_method(
-                    self._sample_progress_id,
-                    Progress.stop_task,
-                    self.sample_iter_task_id
-                )
-                self.sample_iter_task_id = None
+            # if self.sample_iter_task_id is not None:
+            #     print("Shutting down sample_iter_task")
+            #     self._progress_client.run_progress_method(
+            #         self._sample_progress_id,
+            #         Progress.update,
+            #         self.sample_iter_task_id,
+            #         description='[red bold]Interrupted.[/red bold]'
+            #     )
+            #     self._progress_client.run_progress_method(
+            #         self._sample_progress_id,
+            #         Progress.stop_task,
+            #         self.sample_iter_task_id
+            #     )
+            #     self.sample_iter_task_id = None
             self._progress_client.manager.stop()
 
         def _sample_executor_initializer(self):
