@@ -546,11 +546,11 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
 
     ### collectors
 
-    def _collect_batch_iter(self, batch_iter: Iterator[None], options: LMPipeOptions):
+    def _collect_batch_iter(self, batch_iter: Iterable[None], options: LMPipeOptions):
         # TODO: implement batch result collection
         for _ in batch_iter: pass
 
-    def _collect_sample_iter(self, sample_iter: Iterator[ProcessFrameResult], dst: Path, options: LMPipeOptions):
+    def _collect_sample_iter(self, sample_iter: Iterable[ProcessFrameResult], dst: Path, options: LMPipeOptions):
 
         if '{task}' not in str(dst):
             dst = dst / '{task}'
@@ -683,8 +683,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
     def _get_batch_executor(self, options: LMPipeOptions) -> Executor:
         if self._batch_executor is None:
             self._batch_executor = self.configure_batch_executor(
-                initializer=self._batch_executor_initializer,
-                initargs=self._Initargs[()](),
+                initializer=self._get_batch_executor_initializer(),
                 options=options
             )
         return self._batch_executor
@@ -692,17 +691,15 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
     def _get_sample_executor(self, options: LMPipeOptions) -> Executor:
         if self._sample_executor is None:
             self._sample_executor = self.configure_sample_executor(
-                initializer=self._sample_executor_initializer,
-                initargs=self._Initargs[()](),
+                initializer=self._get_sample_executor_initializer(),
                 options=options
             )
         return self._sample_executor
 
     # preimplemented hook
-    def configure_batch_executor[*Ts](
+    def configure_batch_executor(
         self,
-        initializer: Callable[[*Ts], None],
-        initargs: tuple[*Ts],
+        initializer: Callable[[], None],
         options: LMPipeOptions
         ) -> Executor:
         """Configure the executor for batch processing.
@@ -713,7 +710,6 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
         
         Args:
             initializer (Callable[[*Ts], None]): Function to call to initialize each worker process.
-            initargs (tuple[*Ts]): Arguments to pass to the initializer function.
             options (LMPipeOptions): LMPipe options containing executor configuration.
             
         Returns:
@@ -722,21 +718,18 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
 
         if options['executor_mode'] != 'batch' or options['max_workers'] == 0:
             return DummyExecutor(
-                initializer=initializer,
-                initargs=initargs
+                initializer=initializer
             )
 
         return ProcessPoolExecutor(
             max_workers=options['max_workers'] % cpu_count(),
-            initializer=initializer,
-            initargs=initargs
+            initializer=initializer
         )
 
     # preimplemented hook
-    def configure_sample_executor[*Ts](
+    def configure_sample_executor(
         self,
-        initializer: Callable[[*Ts], None],
-        initargs: tuple[*Ts],
+        initializer: Callable[[], None],
         options: LMPipeOptions
         ) -> Executor:
         """Configure the executor for sample processing.
@@ -756,21 +749,40 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
 
         if options['executor_mode'] != 'sample' or options['max_workers'] == 0:
             return DummyExecutor(
-                initializer=initializer,
-                initargs=initargs
+                initializer=initializer
             )
 
         return ProcessPoolExecutor(
             max_workers=options['max_workers'] % cpu_count(),
-            initializer=initializer,
-            initargs=initargs
+            initializer=initializer
         )
 
-    def _batch_executor_initializer(self):
-        _local.wv_pipelines.setdefault(self._main_id, self)
+    class BatchExecutorInitializer[IF: 'LMPipeInterface']:
 
-    def _sample_executor_initializer(self):
-        _local.wv_pipelines.setdefault(self._main_id, self)
+        def __init__(self, interface: IF):
+            """Initializer for batch executor to set up thread-local storage."""
+            self.interface = interface
+
+        def __call__(self):
+            _local.wv_pipelines.setdefault(self.interface._main_id, self.interface)
+
+    def _get_batch_executor_initializer(self):
+        return self.BatchExecutorInitializer(self)
+
+    class SampleExecutorInitializer[IF: 'LMPipeInterface']:
+
+        def __init__(self, interface: IF):
+            """Initializer for sample executor to set up thread-local storage."""
+            self.interface = interface
+            self.main_pid = interface._main_pid
+            self.main_tid = interface._main_tid
+
+        def __call__(self):
+            _local.wv_pipelines.setdefault(self.interface._main_id, self.interface)
+
+
+    def _get_sample_executor_initializer(self):
+        return self.SampleExecutorInitializer(self)
 
     class _with_handle_exceptions[**P, R, E]:
         def __init__(self, func: Callable[P, R], handler: Callable[[Exception], E] = lambda ex: ex):
@@ -815,39 +827,51 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
 
     ### iterators
 
-    def _get_batch_iterator[T](self, batch_map: Iterator[T]) -> Iterator[T]:
+    def _get_batch_iterator[T](self, batch_map: Iterable[T]) -> Iterable[T]:
         return self.configure_batch_iterator(batch_map)
 
-    def _get_sample_iterator[T](self, sample_map: Iterator[T]) -> Iterator[T]:
+    def _get_sample_iterator[T](self, sample_map: Iterable[T]) -> Iterable[T]:
         return self.configure_sample_iterator(sample_map)
 
+    def on_determined_src_dst_length(self, src_dst_length: int):
+        """Called when the length of source-destination pairs is determined.
+        
+        This method can be overridden to perform actions based on the total number of
+        source-destination pairs to be processed. For example, you could use this information
+        to set up progress tracking or logging.
+        
+        Args:
+            src_dst_length (int): The total number of source-destination pairs.
+        """
+        pass
+
     # preimplemented hook
-    def configure_batch_iterator[T](self, batch_map: Iterator[T]) -> Iterator[T]:
+    def configure_batch_iterator[T](self, batch_map: Iterable[T]) -> Iterable[T]:
         """Configure the iterator for batch processing results.
         
         This method can be overridden to customize how batch processing results are iterated.
         For example, you could add progress tracking, filtering, or transformation logic.
         
         Args:
-            batch_map (Iterator[T]): Iterator of batch processing results.
+            batch_map (Iterable[T]): Iterable of batch processing results.
             
         Returns:
-            Iterator[T]: Iterator that may be modified or wrapped with additional functionality.
+            Iterable[T]: Iterable that may be modified or wrapped with additional functionality.
         """
         return batch_map
 
     # preimplemented hook
-    def configure_sample_iterator[T](self, sample_map: Iterator[T]) -> Iterator[T]:
+    def configure_sample_iterator[T](self, sample_map: Iterable[T]) -> Iterable[T]:
         """Configure the iterator for sample processing results.
         
         This method can be overridden to customize how sample processing results are iterated.
         For example, you could add progress tracking, filtering, or transformation logic.
         
         Args:
-            sample_map (Iterator[T]): Iterator of sample processing results.
+            sample_map (Iterable[T]): Iterable of sample processing results.
             
         Returns:
-            Iterator[T]: Iterator that may be modified or wrapped with additional functionality.
+            Iterable[T]: Iterable that may be modified or wrapped with additional functionality.
         """
         return sample_map
 
@@ -931,5 +955,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
         for idx, item in enumerate(iterable):
             q.put(item)
         q.put(_SentinelType.SENTINEL)
+
+        self.on_determined_src_dst_length(idx + 1)
 
         ftr.set_result(idx)

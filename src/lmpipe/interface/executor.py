@@ -13,12 +13,11 @@ class DummyExecutor(Executor):
     # like 2nd overload of ThreadPoolExecutor.__init__
     # and 2nd overload of ProcessPoolExecutor.__init__
 
-    def __init__[*Ts](
+    def __init__(
         self,
         max_workers: int | None = None,
         *,
-        initializer: Callable[[*Ts], object],
-        initargs: tuple[*Ts],
+        initializer: Callable[[], object]
         ):
         """Initialize the dummy executor.
         
@@ -28,7 +27,7 @@ class DummyExecutor(Executor):
             initargs (tuple): Arguments to pass to the initializer.
         """
 
-        initializer(*initargs)
+        initializer()
 
     def submit[**P, T](
         self,
