@@ -7,7 +7,6 @@ import os
 import sys
 from itertools import repeat, count
 from functools import wraps
-from contextlib import contextmanager
 from queue import Queue
 from pathlib import Path
 from threading import local, get_ident, Thread
@@ -49,22 +48,6 @@ def shutdown_listener[S: 'LMPipeInterface'](
     ) -> Callable[[S], None]:
     setattr(listener, '_is_shutdown_listener', True)
     return listener
-
-@contextmanager
-def suppress_stdout_stderr():
-    saved_stdout = (os.dup(1), sys.stdout)
-    saved_stderr = (os.dup(2), sys.stderr)
-    os.dup2(devnull.fileno(), 1)
-    os.dup2(devnull.fileno(), 2)
-    sys.stdout = devnull
-    sys.stderr = devnull
-    try:
-        yield
-    finally:
-        os.dup2(saved_stdout[0], 1)
-        os.dup2(saved_stderr[0], 2)
-        sys.stdout = saved_stdout[1]
-        sys.stderr = saved_stderr[1]
 
 _local = _Local()
 devnull = open(os.devnull, 'w') # global devnull for suppress_stdout_stderr
@@ -506,29 +489,28 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
     def _process_frame(self, frame_src: MatLike | None, frame_idx: int, sample_idx: int) -> ProcessFrameResult:
 
         try:
-            with suppress_stdout_stderr():
 
-                self._estimator_setup()
-                self._estimator_setup = dummy
+            self._estimator_setup()
+            self._estimator_setup = dummy
 
-                if self._current_sample_id != sample_idx:
-                    self._current_sample_id = sample_idx
-                    self.estimator.on_before_estimate(object())
+            if self._current_sample_id != sample_idx:
+                self._current_sample_id = sample_idx
+                self.estimator.on_before_estimate(object())
 
-                landmarks = self.estimator.estimate(frame_src, frame_idx)
+            landmarks = self.estimator.estimate(frame_src, frame_idx)
 
-                if frame_src is None:
-                    annotated_frame = frame_src
-                else:
-                    annotated_frame = self.estimator.annotate(frame_src, frame_idx, landmarks)
+            if frame_src is None:
+                annotated_frame = frame_src
+            else:
+                annotated_frame = self.estimator.annotate(frame_src, frame_idx, landmarks)
 
-                return ProcessFrameResult(
-                    frame_idx=frame_idx,
-                    headers=self.estimator.headers,
-                    landmarks=landmarks,
-                    annotated_frame=annotated_frame,
-                    thread_ident=get_ident()
-                )
+            return ProcessFrameResult(
+                frame_idx=frame_idx,
+                headers=self.estimator.headers,
+                landmarks=landmarks,
+                annotated_frame=annotated_frame,
+                thread_ident=get_ident()
+            )
 
         except Exception as e:
             raise e
