@@ -1,15 +1,10 @@
-from typing import Iterable, Iterator, Unpack, Sized
-import os
-from threading import get_ident
+from typing import Unpack, Iterable, Sized
 from multiprocessing import freeze_support
 from clipar import NotSelected
 from lmpipe.estimator._base import Estimator
 from lmpipe.options import LMPipeOptionsPartial
 from lmpipe.utils import SrcDst
 from .args import GlobalArgs, plugins
-
-os.environ["GRPC_VERBOSITY"] = "ERROR"
-os.environ["GRPC_minloglevel"] = "2"
 
 def main():
 
@@ -20,8 +15,6 @@ def main():
         raise ValueError("lmpipe_args is required")
 
     import shutil
-
-    from ...interface import LMPipeInterface, shutdown_listener
     from ...estimator.holistic.main import HolisticEstimator, HolisticPoseEstimator, HolisticPartEstimator
 
     holistic = global_args.holistic
@@ -117,254 +110,232 @@ def main():
 
     assert global_args.lmpipe_options
 
+    
+    import os
+    import signal
+    import warnings
+    from types import FrameType
+    from threading import get_ident
+    from operator import length_hint
+    from rich.console import Group
+    from rich.live import Live
     from rich.progress import (
-        Progress,
+        Progress, ProgressColumn, TaskID,
         BarColumn, TextColumn, SpinnerColumn,
         TimeElapsedColumn, TimeRemainingColumn, MofNCompleteColumn,
-        TaskID
     )
-    from .progress_bar import ProgressManager, ProgressClient
+    from rich.traceback import install
+    from .mp_rich import RichManager, RenderableRef
+    from ...interface import LMPipeInterface, shutdown_listener
+
+    install(code_width=shutil.get_terminal_size().columns)
+    rich_manager = RichManager()
 
     class CliLMPipeInterface(LMPipeInterface):
-
-        src_dst_iter_task_id: TaskID | None = None
-        def configure_src_dst_iterator(self, src_dst_iter: Iterable[SrcDst]) -> Iterable[SrcDst]:
-            self._progress_client.run_progress_method(
-                self._src_dst_progress_id,
-                Progress.start
-            )
-            if isinstance(src_dst_iter, Sized):
-                total = len(src_dst_iter)
-            else:
-                total = None
-            self.src_dst_iter_task_id = self._progress_client.run_progress_method(
-                self._src_dst_progress_id,
-                Progress.add_task,
-                '[green bold]Searching Samples ...[/green bold]',
-                total=total
-            )
-            for src_dst in src_dst_iter:
-                self._progress_client.run_progress_method(
-                    self._src_dst_progress_id,
-                    Progress.advance,
-                    self.src_dst_iter_task_id,
-                )
-                yield src_dst
-            self._progress_client.run_progress_method(
-                self._src_dst_progress_id,
-                Progress.update,
-                self.src_dst_iter_task_id,
-                description='[green bold]Search Completed.[/green bold]'
-            )
-            self._progress_client.run_progress_method(
-                self._src_dst_progress_id,
-                Progress.stop_task,
-                self.src_dst_iter_task_id,
-            )
-            self.src_dst_iter_task_id = None
-            self._progress_client.run_progress_method(
-                self._src_dst_progress_id,
-                Progress.stop
-            )
-
-        batch_iter_task_id: TaskID | None = None
-        def configure_batch_iterator[T](self, batch_map: Iterator[T]) -> Iterator[T]:
-            self._progress_client.run_progress_method(
-                self._batch_progress_id,
-                Progress.start
-            )
-            if isinstance(batch_map, Sized):
-                total = len(batch_map)
-            else:
-                total = None
-            self.batch_iter_task_id = self._progress_client.run_progress_method(
-                self._batch_progress_id,
-                Progress.add_task,
-                '[green bold]Processing Samples ...[/green bold]',
-                total=total
-            )
-            for batch in batch_map:
-                self._progress_client.run_progress_method(
-                    self._batch_progress_id,
-                    Progress.advance,
-                    self.batch_iter_task_id,
-                )
-                yield batch
-            self._progress_client.run_progress_method(
-                self._batch_progress_id,
-                Progress.update,
-                self.batch_iter_task_id,
-                description='[green bold]Processing Completed.[/green bold]'
-            )
-            self._progress_client.run_progress_method(
-                self._batch_progress_id,
-                Progress.stop_task,
-                self.batch_iter_task_id,
-            )
-            self.batch_iter_task_id = None
-            self._progress_client.run_progress_method(
-                self._batch_progress_id,
-                Progress.stop
-            )
-
-        # sample_iter_task_id: TaskID | None = None
-        # def configure_sample_iterator[T](self, sample_map: Iterator[T]) -> Iterator[T]:
-        #     self._progress_client.run_progress_method(
-        #         self._sample_progress_id,
-        #         Progress.start
-        #     )
-        #     if isinstance(sample_map, Sized):
-        #         total = len(sample_map)
-        #     else:
-        #         total = None
-        #     self.sample_iter_task_id = self._progress_client.run_progress_method(
-        #         self._sample_progress_id,
-        #         Progress.add_task,
-        #         'Processing Frames ...',
-        #         total=total,
-        #     )
-        #     for sample in sample_map:
-        #         self._progress_client.run_progress_method(
-        #             self._sample_progress_id,
-        #             Progress.advance,
-        #             self.sample_iter_task_id,
-        #         )
-        #         yield sample
-        #     self._progress_client.run_progress_method(
-        #         self._sample_progress_id,
-        #         Progress.update,
-        #         self.sample_iter_task_id,
-        #         description='[green bold]Processing Completed.[/green bold]'
-        #     )
-        #     self._progress_client.run_progress_method(
-        #         self._sample_progress_id,
-        #         Progress.stop_task,
-        #         self.sample_iter_task_id,
-        #     )
-        #     self.sample_iter_task_id = None
-        #     self._progress_client.run_progress_method(
-        #         self._sample_progress_id,
-        #         Progress.stop
-        #     )
 
         def __init__(self, estimator: Estimator, **options: Unpack[LMPipeOptionsPartial]):
 
             super().__init__(estimator, **options)
+            self.rich_client = rich_manager.client()
 
-            # マネージャーのシリアライズを防ぐため
-            # クライアントのみを保持する
-            self._progress_client: ProgressClient = (
-                ProgressManager()
-                    .start()
-                    .get_client()
-            )
-
-            self._src_dst_progress_id = self._progress_client.run_progress_init(
-                Progress,
-                TextColumn("{task.description:<24}"),
+            iterable_columns: list[ProgressColumn] = [
+                TextColumn("{task.description}"),
                 SpinnerColumn(),
                 BarColumn(),
-                MofNCompleteColumn(),
-                TimeElapsedColumn(),
+                TimeElapsedColumn()
+            ]
+            sized_columns: list[ProgressColumn] = [
+                *iterable_columns,
+                TextColumn("/"),
                 TimeRemainingColumn(),
+                MofNCompleteColumn(),
+            ]
+
+            self.src_dst_progress = self.rich_client.initialize(
+                Progress, *iterable_columns
             )
 
-            self._batch_progress_id = self._progress_client.run_progress_init(
-                Progress,
-                TextColumn("{task.description:<24}"),
-                SpinnerColumn(),
-                BarColumn(),
-                MofNCompleteColumn(),
-                TimeElapsedColumn(),
-                TimeRemainingColumn(),
+            self.batch_progress = self.rich_client.initialize(
+                Progress, *sized_columns
             )
 
-            self._sample_progress_id = self._progress_client.run_progress_init(
-                Progress,
-                TextColumn("{task.description:<24}"),
-                SpinnerColumn(),
-                BarColumn(),
-                MofNCompleteColumn(),
-                TimeElapsedColumn(),
-                TimeRemainingColumn(),
+            self.sample_progress = self.rich_client.initialize(
+                Progress, *sized_columns
             )
+
+            rich_group = self.rich_client.initialize(
+                Group,
+                self.src_dst_progress,
+                self.batch_progress,
+                self.sample_progress
+            )
+
+            self.rich_live = self.rich_client.initialize(
+                Live, rich_group
+            )
+
+            # Start Live display
+            self.rich_client.call_method(
+                self.rich_live,
+                Live.start
+            )
+
+        PROGRESS_DESCRIPTION_TEMPLATE = (
+            "[ {color} bold ]{process}{status}[/ {color} bold ]"
+        )
+
+        def _configure_progress[T](
+            self,
+            iterable: Iterable[T],
+            progress_ref: RenderableRef[Progress],
+            template: str
+            ) -> tuple[TaskID, Iterable[T]]:
+
+            # Determine total if possible
+            if isinstance(iterable, Sized):
+                total = len(iterable)
+            elif hasattr(iterable, "__length_hint__"):
+                total = length_hint(iterable)
+            else:
+                total = None
+
+            # Add task to progress bar
+            task = self.rich_client.call_method(
+                progress_ref, Progress.add_task,
+                template.format(
+                    color="blue", status=" ..."
+                ),
+                total=total
+            )
+
+            # Define generator to wrap the iterable
+            def generator():
+
+                # Advance progress bar while yielding items
+                try:
+                    for item in iterable:
+                        yield item
+                        self.rich_client.call_method(
+                            progress_ref, Progress.update, task,
+                            advance=1
+                        )
+
+                # Handle interruptions and errors
+                except KeyboardInterrupt:
+                    self.rich_client.call_method(
+                        progress_ref, Progress.update, task,
+                        description=template.format(
+                            color="yellow", status=" Interrupted"
+                        )
+                    )
+
+                # Handle other exceptions
+                except Exception as e:
+                    self.rich_client.call_method(
+                        progress_ref, Progress.update, task,
+                        description=template.format(
+                            color="red", status=" Error"
+                        )
+                    )
+                    raise e
+
+                # Mark task as done
+                else:
+                    self.rich_client.call_method(
+                        progress_ref, Progress.update, task,
+                        description=template.format(
+                            color="green", status=" Done"
+                        )
+                    )
+
+                # Finalize the task
+                finally:
+                    self.rich_client.call_method(
+                        progress_ref, Progress.stop_task, task
+                    )
+
+            return (task, generator())
+
+        def on_determined_src_dst_length(self, src_dst_length: int):
+            self.rich_client.call_method(
+                self.batch_progress, Progress.update,
+                self.src_dst_progress_task,
+                total=src_dst_length
+            )
+
+        def configure_src_dst_iterator(self, src_dst_iter: Iterable[SrcDst]) -> Iterable[SrcDst]:
+            self.src_dst_progress_task, generator = self._configure_progress(
+                src_dst_iter,
+                self.src_dst_progress,
+                self.PROGRESS_DESCRIPTION_TEMPLATE.format(
+                    color="{color}", process="Searching", status="{status}"
+                )
+            )
+            return generator
+
+        def configure_batch_iterator[T](self, batch_map: Iterable[T]) -> Iterable[T]:
+            _, generator = self._configure_progress(
+                batch_map,
+                self.batch_progress,
+                self.PROGRESS_DESCRIPTION_TEMPLATE.format(
+                    color="{color}", process="Batch Processing", status="{status}"
+                )
+            )
+            return generator
+
+        def configure_sample_iterator[T](self, sample_map: Iterable[T]) -> Iterable[T]:
+            _, generator = self._configure_progress(
+                sample_map,
+                self.sample_progress,
+                self.PROGRESS_DESCRIPTION_TEMPLATE.format(
+                    color="{color}", process="Sample Processing", status="{status}"
+                )
+            )
+            return generator
 
         @shutdown_listener
         def _shutdown_listener(self):
-            if self.src_dst_iter_task_id is not None:
-                print("Shutting down src_dst_iter_task")
-                self._progress_client.run_progress_method(
-                    self._src_dst_progress_id,
-                    Progress.update,
-                    self.src_dst_iter_task_id,
-                    description='[red bold]Interrupted.[/red bold]'
-                )
-                self._progress_client.run_progress_method(
-                    self._src_dst_progress_id,
-                    Progress.stop_task,
-                    self.src_dst_iter_task_id
-                )
-                self.src_dst_iter_task_id = None
-            if self.batch_iter_task_id is not None:
-                print("Shutting down batch_iter_task")
-                self._progress_client.run_progress_method(
-                    self._batch_progress_id,
-                    Progress.update,
-                    self.batch_iter_task_id,
-                    description='[red bold]Interrupted.[/red bold]'
-                )
-                self._progress_client.run_progress_method(
-                    self._batch_progress_id,
-                    Progress.stop_task,
-                    self.batch_iter_task_id
-                )
-                self.batch_iter_task_id = None
-            # if self.sample_iter_task_id is not None:
-            #     print("Shutting down sample_iter_task")
-            #     self._progress_client.run_progress_method(
-            #         self._sample_progress_id,
-            #         Progress.update,
-            #         self.sample_iter_task_id,
-            #         description='[red bold]Interrupted.[/red bold]'
-            #     )
-            #     self._progress_client.run_progress_method(
-            #         self._sample_progress_id,
-            #         Progress.stop_task,
-            #         self.sample_iter_task_id
-            #     )
-            #     self.sample_iter_task_id = None
-            self._progress_client.manager.stop()
-
-        def _sample_executor_initializer(self):
-
-            if self._main_tid != get_ident():
-                return super()._sample_executor_initializer()
-
-            import os
-            import signal
-            from types import FrameType
-            def forward_sigint_to_main_process(
-                signum: int,
-                frame: FrameType | None
-                ):
-                os.kill(self._main_pid, signal.SIGINT)
-
-            # 子プロセスでのSIGINTはメインプロセスに転送する
-            signal.signal(signal.SIGINT, forward_sigint_to_main_process)
-
-            # Protobufの非推奨警告を抑制
-            import warnings
-            warnings.filterwarnings(
-                'ignore',
-                message=r'.*SymbolDatabase\.GetPrototype\(\) is deprecated.*',
-                category=UserWarning,
-                module=r'google\.protobuf\.symbol_database'
+            # Stop Live display
+            self.rich_client.call_method(
+                self.rich_live,
+                Live.stop
             )
 
-            return super()._sample_executor_initializer() 
+        class SampleExecutorInitializer(
+            LMPipeInterface.SampleExecutorInitializer[
+                'CliLMPipeInterface'
+            ]
+            ):
 
-    from rich.traceback import install
-    install(code_width=shutil.get_terminal_size().columns)
+            def __call__(self):
+
+                if self.main_tid != get_ident():
+                    return super().__call__()
+
+                def forward_sigint_to_main_process(
+                    signum: int,
+                    frame: 'FrameType | None'
+                    ):
+                    os.kill(self.main_pid, signal.SIGINT)
+
+                # Protobufの非推奨警告を抑制
+                warnings.filterwarnings(
+                    'ignore',
+                    message=r'.*SymbolDatabase\.GetPrototype\(\) is deprecated.*',
+                    category=UserWarning,
+                    module=r'google\.protobuf\.symbol_database'
+                )
+
+                if self.main_pid != os.getpid():
+                    return super().__call__()
+
+                # 子プロセスでのSIGINTはメインプロセスに転送する
+                signal.signal(signal.SIGINT, forward_sigint_to_main_process)
+
+                # 子プロセスでの標準出力・標準エラー出力を破棄する
+                devnull = os.open(os.devnull, os.O_RDWR)
+                os.dup2(devnull, 1)  # stdout
+                os.dup2(devnull, 2)  # stderr
 
     print("Initializing LMPipe Interface ...")
     try:
@@ -400,5 +371,3 @@ def main():
 if __name__ == "__main__":
     freeze_support()
     main()
-
-    

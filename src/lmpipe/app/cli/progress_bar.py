@@ -14,9 +14,9 @@ from rich.progress import (
     Progress,
 )
 
-_ManagerId = int
-_WorkerId = int
-_ProgressId = int
+type _ManagerId = int
+type _WorkerId = int
+type _ProgressId = int
 
 class _SingletonEnum(Enum):
     NA = auto()
