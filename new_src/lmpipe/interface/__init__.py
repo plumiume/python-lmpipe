@@ -414,3 +414,10 @@ class LMPipeRunner[K: str]:
 
             for f in files:
                 yield (f, rel_dst / f.name)
+
+    def _filter_src_dst(
+        self,
+        src_dst_iter: Iterable[SrcDst[Path]],
+        ) -> Iterable[SrcDst[Path]]:
+
+        
