@@ -1,0 +1,59 @@
+#${import_typeddict}
+#${from_clipar_import_mixin_group}
+
+from .typedefs import ExecutorMode, ExecutorType, AlreadyExistFileRule
+
+class RequiresResources:
+    """Type definition for resource requirement configuration."""
+    cpu: float = 1.0
+    "amount of CPU required"
+    cpu_tags: list[str] = []
+    "tags for CPU requirements"
+    gpu: float = 0.0
+    "amount of GPU required"
+    gpu_tags: list[str] = []
+    "tags for GPU requirements"
+
+class OutputOptions:
+    """Type definition for output configuration options."""
+
+    # Landmarks Matrix Options
+    landmarks_matrix_save_format: str | None = None
+    'format to save landmarks matrix, default is None'
+    landmarks_matrix_save_mode: AlreadyExistFileRule = 'skip'
+    'mode to save landmarks matrix, default is "skip"'
+
+    # Annotated Frames Options
+    annotated_frames_show_format: str | None = None
+    'format to show annotated frames, default is None'
+
+    # Annotated Frames Save Options
+    annotated_frames_save_format: str | None = None
+    'format to save annotated frames, default is None'
+    annotated_frames_save_mode: AlreadyExistFileRule = 'skip'
+    'mode to save annotated frames, default is "skip"'
+    annotated_frames_save_width: int = 640
+    'width to save annotated frames'
+    annotated_frames_save_height: int = 480
+    'height to save annotated frames'
+    annotated_frames_save_fps: float = 30.0
+    'fps to save annotated frames'
+    annotated_frames_save_fourcc: str = 'mp4v'
+    'fourcc to save annotated frames, default is "mp4v"'
+    annotated_frames_save_ext: str = '.mp4'
+    'file extension to save annotated frames, default is ".mp4"'
+
+class ExecutorOptions:
+    """Type definition for executor configuration options."""
+    max_workers: int = 0 # cpu_count()
+    'maximum number of worker threads/processes, default is 4'
+    executor_mode: ExecutorMode = None
+    'executor mode'
+    executor_type: ExecutorType = 'thread'
+    'executor type, either "thread" or "process"'
+
+class LMPipeOptions(OutputOptions, ExecutorOptions, RequiresResources):
+    """Complete lmpipe configuration options.
+    
+    Combines output and executor options into a single configuration type."""
+    pass
