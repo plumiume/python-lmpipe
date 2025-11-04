@@ -1,7 +1,7 @@
 from enum import IntEnum
 from numpy.typing import NDArray
 import numpy as np
-from cv2.typing import MatLike
+from cv2.typing import MatLike as _MatLike
 from mediapipe.tasks.python.core.base_options import BaseOptions # pyright: ignore[reportMissingTypeStubs]
 from mediapipe.tasks.python.vision.pose_landmarker import PoseLandmarker, PoseLandmarkerOptions # pyright: ignore[reportMissingTypeStubs]
 from mediapipe.tasks.python.components.containers.landmark import NormalizedLandmark # pyright: ignore[reportMissingTypeStubs]
@@ -14,9 +14,11 @@ from ....estimator.holistic.main import HolisticPoseEstimator
 from ..core import get_model, MediaPipeEstimator
 from .args import MediaPipePoseArgs
 
+type MatLike = _MatLike
 type NDArrayFloat = NDArray[np.floating]
 
 class PoseNames(IntEnum):
+    """Enum for pose landmark names based on MediaPipe Pose model."""
     NOSE = 0
     LEFT_EYE_INNER = 1
     LEFT_EYE = 2
@@ -52,6 +54,14 @@ class PoseNames(IntEnum):
     RIGHT_FOOT_INDEX = 32
 
 class MediaPipePoseEstimator(MediaPipeEstimator, HolisticPoseEstimator):
+    """MediaPipe Pose Landmarker estimator for LMPipe plugin.
+
+    This plugin uses MediaPipe's Pose Landmarker to detect body pose landmarks in images.
+
+    Args:
+        pose_args (MediaPipePoseArgs): Arguments for configuring the pose landmarker.
+        common_args (MediaPipeCommonArgs): Common arguments for all MediaPipe tasks.
+    """
 
     hand_clip_scale = 6.0
     face_clip_scale = 4.0

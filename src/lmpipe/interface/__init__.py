@@ -42,16 +42,26 @@ class _Local(local):
 class _SentinelType(Enum):
     SENTINEL = 0
 
-def dummy(*args: object, **kwargs: object): pass
+def dummy(*args: object, **kwargs: object):
+    """A no-operation function that does nothing."""
+    pass
 
 def shutdown_listener[S: 'LMPipeInterface'](
     listener: Callable[[S], None]
     ) -> Callable[[S], None]:
+    """Decorator to mark a method as a shutdown listener.
+
+    This decorator can be used to mark a method as a shutdown listener,
+    which will be called when the pipeline is shutting down.
+
+    Args:
+        listener ((S) -> None): The listener function to decorate.
+    """
     setattr(listener, '_is_shutdown_listener', True)
     return listener
 
 @contextmanager
-def suppress_stdout_stderr():
+def _suppress_stdout_stderr():
     saved_stdout = (os.dup(1), sys.stdout)
     saved_stderr = (os.dup(2), sys.stderr)
     os.dup2(devnull.fileno(), 1)
@@ -67,15 +77,18 @@ def suppress_stdout_stderr():
         sys.stderr = saved_stderr[1]
 
 _local = _Local()
-devnull = open(os.devnull, 'w') # global devnull for suppress_stdout_stderr
+devnull = open(os.devnull, 'w') # global devnull for _suppress_stdout_stderr
 
 @runtime_checkable
 class _LMPipeInterfaceCallback(Protocol):
+    """Protocol for LMPipe interface callbacks."""
     def __call__(_self, self: 'LMPipeInterface') -> object: ...
 
 class _LMPipeInterfaceMeta(type):
+    """Metaclass for LMPipe interface classes."""
 
     shutdown_listener_registry: set[_LMPipeInterfaceCallback] = set()
+    "Registry of shutdown listener callbacks."
 
     def __init__(self, name: str, bases: tuple[type, ...], namespace: dict[str, object]):
 
@@ -93,6 +106,73 @@ class _LMPipeInterfaceMeta(type):
             )
 
 class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
+    """Main interface for running landmark estimation pipelines.
+
+    This class orchestrates the entire processing pipeline: input detection,
+    executor management, frame processing, and output collection. It supports
+    multiple input types (video files, image sequences, single images, camera streams)
+    and multiple execution modes (sequential, batch parallel, sample parallel).
+
+    The interface automatically detects input types and routes to the appropriate
+    processing method. It manages executors (using loky for process pools) and
+    uses thread-local storage to maintain references across worker processes.
+
+    Args:
+        estimator (Estimator): The estimator instance for landmark detection.
+        **options: LMPipe options to override defaults (see :class:`LMPipeOptions`).
+
+    Examples:
+        Basic usage with automatic input detection::
+
+            from lmpipe.interface import LMPipeInterface
+            from lmpipe.estimator.holistic import HolisticEstimator
+
+            estimator = HolisticEstimator()
+            interface = LMPipeInterface(estimator)
+            
+            # Process a single video file
+            interface.run('input.mp4', 'output/')
+            
+            # Process a directory of videos in batch mode
+            interface.run_batch('videos/', 'output/', max_workers=4)
+
+        Custom options and output formats::
+
+            interface = LMPipeInterface(
+                estimator,
+                landmarks_matrix_save_format='.csv',
+                annotated_frames_save_format='cv2',
+                annotated_frames_show_format='cv2'
+            )
+            
+            # Process with custom options
+            interface.run_video('input.mp4', 'output/', max_workers=2)
+
+        Processing camera stream::
+
+            interface.run_stream(0, 'output/')  # 0 is default camera
+
+        Override executors or iterators for custom behavior::
+
+            class CustomInterface(LMPipeInterface):
+                def configure_batch_executor(self, initializer, options):
+                    # Custom executor configuration
+                    return ProcessPoolExecutor(max_workers=8, initializer=initializer)
+                
+                def configure_sample_iterator(self, sample_map):
+                    # Add progress tracking
+                    from tqdm import tqdm
+                    return tqdm(sample_map, desc="Processing frames")
+
+    Attributes:
+        estimator (Estimator): The landmark estimator instance.
+        lmpipe_options (LMPipeOptions): Merged pipeline options.
+
+    Note:
+        The interface uses thread-local storage to maintain references across
+        worker processes. When using custom executors or modifying the pipeline,
+        ensure thread-safety and proper initialization of worker processes.
+    """
 
     ## Serialize
 
@@ -188,9 +268,6 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
             dst (PathLike): Destination path.
             **options: Additional LMPipe options to override defaults.
 
-        Returns:
-            The result of the processing operation.
-
         Raises:
             FileNotFoundError: If the source path does not exist.
             ValueError: If the source path is neither a file nor a directory.
@@ -215,9 +292,6 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
             dst (PathLike): Destination directory path.
             **options: Additional LMPipe options to override defaults.
 
-        Returns:
-            The result of the batch processing operation.
-
         Raises:
             ValueError: If the source path is not a directory.
         """
@@ -239,9 +313,6 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
             dst (PathLike): Destination path.
             **options: Additional LMPipe options to override defaults.
 
-        Returns:
-            The result of the sample processing operation.
-
         Raises:
             ValueError: If the source path is not a file.
         """
@@ -262,9 +333,6 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
             src (PathLike): Source video file path.
             dst (PathLike): Destination path.
             **options: Additional LMPipe options to override defaults.
-
-        Returns:
-            The result of the video processing operation.
             
         Raises:
             ValueError: If the source path is not a video file.
@@ -286,9 +354,6 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
             src (PathLike): Source directory containing image sequence.
             dst (PathLike): Destination path.
             **options: Additional LMPipe options to override defaults.
-
-        Returns:
-            The result of the image sequence processing operation.
             
         Raises:
             ValueError: If the source path is not an image sequence directory.
@@ -311,9 +376,6 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
             dst (PathLike): Destination path.
             **options: Additional LMPipe options to override defaults.
 
-        Returns:
-            The result of the image processing operation.
-            
         Raises:
             ValueError: If the source path is not an image file.
         """
@@ -334,9 +396,6 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
             src (int): Camera index or device ID (typically 0 for default camera).
             dst (PathLike): Destination path for output.
             **options: Additional LMPipe options to override defaults.
-
-        Returns:
-            The result of the stream processing operation.
         """
         dst_path = Path(dst)
         options_: LMPipeOptions = {**self.lmpipe_options, **options}
@@ -349,6 +408,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
 
     # batch executor holder
     def _run_batch(self, src_dst: SrcDst, options: LMPipeOptions):
+        """Run the batch processing pipeline for multiple samples."""
 
         def exp_handler(ex: Exception):
             print(f"Exception in batch processing: {ex}", file=sys.stderr)
@@ -382,6 +442,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
         self._collect_batch_iter(batch_iter, options)
 
     def _run_sample(self, src_dst: SrcDst, options: LMPipeOptions, sample_idx: int = 0):
+        """Run the processing pipeline for a single sample."""
 
         if is_video_file(src_dst[0]):
             return self._run_video(src_dst, options, sample_idx=sample_idx)
@@ -395,6 +456,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
         )
 
     def _run_video(self, src_dst: SrcDst, options: LMPipeOptions, sample_idx: int = 0):
+        """Run the processing pipeline for a video file."""
 
         capture = cv2.VideoCapture(str(src_dst[0]))
         if not capture.isOpened():
@@ -416,6 +478,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
         self._collect_sample_iter(sample_iter, src_dst[1], options)
 
     def _run_image_sequence(self, src_dst: SrcDst, options: LMPipeOptions, sample_idx: int = 0):
+        """Run the processing pipeline for an image sequence."""
 
         executor = self._get_sample_executor(options)
 
@@ -431,6 +494,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
         self._collect_sample_iter(sample_iter, src_dst[1], options)
 
     def _run_image(self, src_dst: SrcDst, options: LMPipeOptions, sample_idx: int = 0):
+        """Run the processing pipeline for a single image."""
 
         executor = self._get_sample_executor(options)
 
@@ -444,6 +508,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
         self._collect_sample_ftr(sample_ftr, src_dst[1], options)
 
     def _run_stream(self, src: int, dst: Path, options: LMPipeOptions, sample_idx: int = 0):
+        """Run the processing pipeline for a video stream."""
 
         capture = cv2.VideoCapture(src)
         if not capture.isOpened():
@@ -473,6 +538,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
         options: LMPipeOptions,
         sample_idx: int
         ) -> Iterator[ProcessFrameResult]:
+        """Process multiple frames in a sample."""
 
         process_frame = self._with_thread_local(self.__class__._process_frame)
 
@@ -490,6 +556,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
         options: LMPipeOptions,
         sample_idx: int
         ) -> Future[ProcessFrameResult]:
+        """Process a single image frame."""
 
         process_frame = self._with_thread_local(self.__class__._process_frame)
 
@@ -504,9 +571,10 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
     ### estimator handler
 
     def _process_frame(self, frame_src: MatLike | None, frame_idx: int, sample_idx: int) -> ProcessFrameResult:
+        """Process a single frame for estimation."""
 
         try:
-            with suppress_stdout_stderr():
+            with _suppress_stdout_stderr():
 
                 self._estimator_setup()
                 self._estimator_setup = dummy
@@ -537,6 +605,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
     ### helpers
 
     def _prepare_run(self, src: PathLike, dst: PathLike, options: LMPipeOptionsPartial) -> tuple[Path, Path, LMPipeOptions]:
+        """Prepare the run by resolving paths and merging options."""
 
         src_path = Path(src)
         dst_path = Path(dst)
@@ -547,10 +616,12 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
     ### collectors
 
     def _collect_batch_iter(self, batch_iter: Iterable[None], options: LMPipeOptions):
+        """Collect results from an iterator of batch processing results."""
         # TODO: implement batch result collection
         for _ in batch_iter: pass
 
     def _collect_sample_iter(self, sample_iter: Iterable[ProcessFrameResult], dst: Path, options: LMPipeOptions):
+        """Collect results from an iterator of sample processing results."""
 
         if '{task}' not in str(dst):
             dst = dst / '{task}'
@@ -579,6 +650,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
             cllctr.close()
 
     def _collect_sample_ftr(self, sample_ftr: Future[ProcessFrameResult], dst: Path, options: LMPipeOptions):
+        """Collect results from a future representing a single sample processing result."""
 
         if '{task}' not in str(dst):
             dst = dst / '{task}'
@@ -608,6 +680,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
             cllctr.close()
 
     def _get_landmarks_matrix_writer(self, dst: Path, options: LMPipeOptions) -> landmarks_matrix_writer.LandmarksMatrixWriter:
+        """Get the landmarks matrix writer based on the provided options."""
 
         formatted_dst = Path(str(dst).format(task='landmarks'))
         formatted_dst.parent.mkdir(parents=True, exist_ok=True)
@@ -627,6 +700,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
         return writer
 
     def _get_annotated_frames_viewer(self, options: LMPipeOptions) -> annotated_frames_viewer.AnnotatedFramesViewer:
+        """Get the annotated frames viewer based on the provided options."""
 
         match options['annotated_frames_show_format']:
             case None:
@@ -639,6 +713,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
         return viewer
 
     def _get_annotated_frames_writer(self, dst: Path, options: LMPipeOptions) -> annotated_frames_writer.AnnotatedFramesWriter:
+        """Get the annotated frames writer based on the provided options."""
 
         formatted_dst = Path(str(dst).format(task='annotated_frames'))
         formatted_dst.parent.mkdir(parents=True, exist_ok=True)
@@ -681,6 +756,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
             return self
 
     def _get_batch_executor(self, options: LMPipeOptions) -> Executor:
+        """Get or create the batch executor based on the provided options."""
         if self._batch_executor is None:
             self._batch_executor = self.configure_batch_executor(
                 initializer=self._get_batch_executor_initializer(),
@@ -689,6 +765,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
         return self._batch_executor
 
     def _get_sample_executor(self, options: LMPipeOptions) -> Executor:
+        """Get or create the sample executor based on the provided options."""
         if self._sample_executor is None:
             self._sample_executor = self.configure_sample_executor(
                 initializer=self._get_sample_executor_initializer(),
@@ -709,11 +786,11 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
         otherwise returns a DummyExecutor for sequential processing.
         
         Args:
-            initializer (Callable[[*Ts], None]): Function to call to initialize each worker process.
+            initializer (``Callable[[*Ts], None]``): Function to call to initialize each worker process.
             options (LMPipeOptions): LMPipe options containing executor configuration.
             
         Returns:
-            Executor: Executor instance for batch processing.
+            :code:`Executor`: Executor instance for batch processing.
         """
 
         if options['executor_mode'] != 'batch' or options['max_workers'] == 0:
@@ -739,12 +816,12 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
         otherwise returns a DummyExecutor for sequential processing.
         
         Args:
-            initializer (Callable[[*Ts], None]): Function to call to initialize each worker process.
-            initargs (tuple[*Ts]): Arguments to pass to the initializer function.
+            initializer (``Callable[[*Ts], None]``): Function to call to initialize each worker process.
+            initargs (``tuple[*Ts]``): Arguments to pass to the initializer function.
             options (LMPipeOptions): LMPipe options containing executor configuration.
             
         Returns:
-            Executor: Executor instance for sample processing.
+            :code:`Executor`: Executor instance for sample processing.
         """
 
         if options['executor_mode'] != 'sample' or options['max_workers'] == 0:
@@ -757,34 +834,91 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
             initializer=initializer
         )
 
-    class BatchExecutorInitializer[IF: 'LMPipeInterface']:
+    class BatchExecutorInitializer:
+        """Initializer for batch executors.
 
-        def __init__(self, interface: IF):
-            """Initializer for batch executor to set up thread-local storage."""
+        Registers the :class:`LMPipeInterface` instance in thread-local storage
+        for each worker process. Subclass this initializer to customize any
+        per-worker setup required for batch execution.
+
+        This class does not perform heavy initialization by default; it only
+        ensures the interface instance is available to worker threads or
+        processes via thread-local storage.
+        """
+
+        def __init__(self, interface: 'LMPipeInterface'):
+            """Create a BatchExecutorInitializer.
+
+            Args:
+                interface (LMPipeInterface): The interface instance that will
+                    be registered in thread-local storage for worker processes.
+
+            Subclasses may add additional per-worker initialization here.
+            """
             self.interface = interface
 
-        def __call__(self):
+        def __call__(self) -> None:
+            """Initialize a batch worker process.
+
+            This method is called when a worker process starts. The default
+            implementation registers the interface instance in thread-local
+            storage so that worker threads can access the shared
+            :class:`LMPipeInterface` instance.
+
+            Subclasses can override this method to perform extra initialization
+            steps (for example, loading model weights into worker-local
+            resources) before processing begins.
+            """
+
             _local.wv_pipelines.setdefault(self.interface._main_id, self.interface)
 
     def _get_batch_executor_initializer(self):
         return self.BatchExecutorInitializer(self)
 
-    class SampleExecutorInitializer[IF: 'LMPipeInterface']:
+    class SampleExecutorInitializer:
+        """Initializer for sample executors.
 
-        def __init__(self, interface: IF):
-            """Initializer for sample executor to set up thread-local storage."""
+        Registers the :class:`LMPipeInterface` instance in thread-local storage
+        for each worker process used during sample processing. Subclass to
+        customize per-worker initialization for sample execution.
+        """
+
+        def __init__(self, interface: 'LMPipeInterface'):
+            """Create a SampleExecutorInitializer.
+
+            Args:
+                interface (LMPipeInterface): The interface instance to be
+                    registered in thread-local storage for worker processes.
+
+            The initializer captures the main process id and thread id from
+            the provided interface (``main_pid`` and ``main_tid``). Subclasses
+            can extend this constructor to perform additional setup.
+            """
             self.interface = interface
             self.main_pid = interface._main_pid
             self.main_tid = interface._main_tid
 
-        def __call__(self):
+        def __call__(self) -> None:
+            """Initialize a sample worker process.
+
+            Called when a sample worker starts. The default behavior is to
+            register the interface instance in thread-local storage so the
+            worker can access the shared :class:`LMPipeInterface` instance.
+
+            Override to perform additional per-worker initialization if
+            necessary (for example, to set up per-process caches or device
+            contexts).
+            """
+
             _local.wv_pipelines.setdefault(self.interface._main_id, self.interface)
 
 
     def _get_sample_executor_initializer(self):
+        """Get the sample executor initializer instance."""
         return self.SampleExecutorInitializer(self)
 
     class _with_handle_exceptions[**P, R, E]:
+        """Wrap a function to handle exceptions using a provided handler."""
         def __init__(self, func: Callable[P, R], handler: Callable[[Exception], E] = lambda ex: ex):
             self.func = func
             self.handler = handler
@@ -799,9 +933,12 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
         self,
         func: Callable[Concatenate[Self, P], R]
         ):
+        """Wrap a method to access the correct LMPipeInterface instance in thread-local storage."""
         return self._ThreadLocalMethod(self, func)
 
     class _ThreadLocalMethod[S: 'LMPipeInterface', **P, R]:
+        """Wrapper for methods that need access to the correct LMPipeInterface instance
+        in thread-local storage."""
 
         def __init__(
             self,
@@ -828,9 +965,11 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
     ### iterators
 
     def _get_batch_iterator[T](self, batch_map: Iterable[T]) -> Iterable[T]:
+        """Get the iterator for batch processing results."""
         return self.configure_batch_iterator(batch_map)
 
     def _get_sample_iterator[T](self, sample_map: Iterable[T]) -> Iterable[T]:
+        """Get the iterator for sample processing results."""
         return self.configure_sample_iterator(sample_map)
 
     def on_determined_src_dst_length(self, src_dst_length: int):
@@ -856,7 +995,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
             batch_map (Iterable[T]): Iterable of batch processing results.
             
         Returns:
-            Iterable[T]: Iterable that may be modified or wrapped with additional functionality.
+            :code:`Iterable[T]`: Iterable that may be modified or wrapped with additional functionality.
         """
         return batch_map
 
@@ -885,12 +1024,13 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
             src_dst_iter (Iterable[SrcDst]): Iterable of source-destination pairs.
 
         Returns:
-            Iterable[SrcDst]: Iterable that may be modified or wrapped with additional functionality.
+            :code:`Iterable[SrcDst]`: Iterable that may be modified or wrapped with additional functionality.
         """
         return src_dst_iter
 
 
     def _src_dst_generator(self, src_dst: SrcDst) -> Iterator[SrcDst]:
+        """Generate source-destination pairs for a given source-destination mapping."""
 
         src_path, dst_path = src_dst
 
@@ -921,6 +1061,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
             raise ValueError
 
     def _background_iterate[T](self, iterable: Iterable[T], maxsize: int = 0) -> Generator[T, None, int]:
+        """Iterate over an iterable in a background thread using a queue."""
 
         q: "Queue[T | Literal[_SentinelType.SENTINEL]]" = Queue(maxsize=maxsize)
 
@@ -950,6 +1091,7 @@ class LMPipeInterface(metaclass=_LMPipeInterfaceMeta):
         q: "Queue[T | Literal[_SentinelType.SENTINEL]]",
         ftr: Future[int]
         ):
+        """Implementation of background iteration using a queue."""
 
         idx: int = 0
         for idx, item in enumerate(iterable):

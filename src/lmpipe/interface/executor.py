@@ -23,7 +23,7 @@ class DummyExecutor(Executor):
         
         Args:
             max_workers (int | None, optional): Ignored, kept for compatibility.
-            initializer (Callable): Function to call for initialization.
+            initializer (() -> None): Function to call for initialization.
             initargs (tuple): Arguments to pass to the initializer.
         """
 
@@ -44,7 +44,7 @@ class DummyExecutor(Executor):
             **kwargs: Keyword arguments to pass to the callable.
             
         Returns:
-            Future[T]: A Future object representing the execution result.
+            :code:`Future[T]`: A `Future` object representing the execution result.
         """
 
         ftr = Future[T]()

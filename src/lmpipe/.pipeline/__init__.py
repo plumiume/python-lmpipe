@@ -639,8 +639,8 @@ class Pipeline:
         otherwise returns a DummyExecutor for sequential processing.
         
         Args:
-            initializer (Callable[[*Ts], None]): Function to call to initialize each worker process.
-            initargs (tuple[*Ts]): Arguments to pass to the initializer function.
+            initializer (``Callable[[*Ts], None]``): Function to call to initialize each worker process.
+            initargs (``tuple[*Ts]``): Arguments to pass to the initializer function.
             options (LMPipeOptions): LMPipe options containing executor configuration.
             
         Returns:
@@ -673,8 +673,8 @@ class Pipeline:
         otherwise returns a DummyExecutor for sequential processing.
         
         Args:
-            initializer (Callable[[*Ts], None]): Function to call to initialize each worker process.
-            initargs (tuple[*Ts]): Arguments to pass to the initializer function.
+            initializer (``Callable[[*Ts], None]``): Function to call to initialize each worker process.
+            initargs (``tuple[*Ts]``): Arguments to pass to the initializer function.
             options (LMPipeOptions): LMPipe options containing executor configuration.
             
         Returns:

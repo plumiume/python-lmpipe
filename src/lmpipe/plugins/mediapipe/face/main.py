@@ -16,6 +16,15 @@ type NDArrayFloat = NDArray[np.floating]
 FACE_LANDMARKS_NUM = 468
 
 class MediaPipeFaceEstimator(MediaPipeEstimator, HolisticPartEstimator):
+    """MediaPipe Face Landmarker estimator for LMPipe plugin.
+
+    This plugin uses MediaPipe's Face Landmarker to detect facial landmarks in images.
+
+    Args:
+        face_args (MediaPipeFaceArgs): Arguments for configuring the face landmarker.
+        common_args (MediaPipeCommonArgs): Common arguments for all MediaPipe tasks.
+
+    """
 
     def __init__(
         self,

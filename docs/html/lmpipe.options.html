@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en" data-content_root="./">
+<head>
+    <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+        <title>lmpipe.options module &mdash; lmpipe 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" type="text/css" href="_static/dist/fontawesome.css" />
+      <link rel="stylesheet" type="text/css" href="_static/dist/theme.css?v=310cf088" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+            <link rel="index" title="Index" href="genindex.html" />
+            <link rel="search" title="Search" href="search.html" />
+            <link rel="top" title="lmpipe 0.1.0 documentation" href="#" />
+            <link rel="up" title="lmpipe package" href="lmpipe.html" />
+            <link rel="next" title="lmpipe.utils module" href="lmpipe.utils.html" />
+            <link rel="prev" title="lmpipe.plugins.loader module" href="lmpipe.plugins.loader.html" />
+    </head>
+<body>
+    <script type="text/javascript" src="_static/dist/blocking.js"></script>
+    <header class="container-fluid bg-primary">
+        <a class="btn btn-sm btn-light skip-to-content-link" href="#main">Skip to content</a>
+        <div class="container-fluid">
+            <div class="navbar navbar-expand-lg navbar-dark font-weight-bold">
+                    <a href="index.html"
+                        title="Wagtail"
+                        class="logo navbar-brand"
+                    >
+                        <img src="_static/img/wagtail-logo-circle.svg" width="45" height="59" alt="Wagtail"
+                            class="logo-img"
+                        />
+                        Sphinx Wagtail Theme
+                    </a>
+                
+                
+                <button class="navbar-toggler btn btn-primary d-lg-none" type="button" data-toggle="collapse" data-target="#collapseSidebar" aria-expanded="false" aria-controls="collapseExample">
+                    <span class="navbar-toggler-icon"></span>
+                    <span class="sr-only">menu</span>
+                </button>
+            </div>
+        </div>
+    </header>
+    <div class="container-fluid">
+        <div class="row">
+            <aside class="col-12 col-lg-3 sidebar-container">
+                <div id="collapseSidebar" class="collapse sticky-top d-lg-block pt-5 pr-lg-4">
+<div id="searchbox" class="searchbox mb-6 px-1" role="search">
+    <form id="search-form" action="search.html" autocomplete="off" method="get" role="search">
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <div class="input-group-text border-right-0 bg-white py-3 pl-3 pr-2"><span class="fas fa-search"></span></div>
+            </div>
+            <input class="form-control py-3 pr-3 pl-1 h-100 border-left-0" type="search" name="q" placeholder="Search documentation" aria-label="Search documentation" id="searchinput" />
+        </div>
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div><div class="site-toc">
+    <nav class="toc mt-3" aria-label="Main menu">
+        <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">lmpipe</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="lmpipe.html">lmpipe package</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="lmpipe.app.html">lmpipe.app package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.app.cli.html">lmpipe.app.cli module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="lmpipe.collector.html">lmpipe.collector package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.collector.annotated_frames_viewer.html">lmpipe.collector.annotated_frames_viewer package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.collector.annotated_frames_viewer.options.html">lmpipe.collector.annotated_frames_viewer.options module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.collector.annotated_frames_viewer.viewers.html">lmpipe.collector.annotated_frames_viewer.viewers module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.collector.annotated_frames_writer.html">lmpipe.collector.annotated_frames_writer package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.collector.annotated_frames_writer.options.html">lmpipe.collector.annotated_frames_writer.options module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.collector.annotated_frames_writer.writers.html">lmpipe.collector.annotated_frames_writer.writers module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.collector.landmarks_matrix_writer.html">lmpipe.collector.landmarks_matrix_writer package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.collector.landmarks_matrix_writer.options.html">lmpipe.collector.landmarks_matrix_writer.options module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.collector.landmarks_matrix_writer.writers.html">lmpipe.collector.landmarks_matrix_writer.writers module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.collector.base.html">lmpipe.collector.base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.collector.types.html">lmpipe.collector.types module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="lmpipe.estimator.html">lmpipe.estimator package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.estimator.holistic.html">lmpipe.estimator.holistic package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.estimator.holistic.args.html">lmpipe.estimator.holistic.args module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.estimator.holistic.main.html">lmpipe.estimator.holistic.main module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="lmpipe.interface.html">lmpipe.interface package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.interface.executor.html">lmpipe.interface.executor module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="lmpipe.plugins.html">lmpipe.plugins package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.plugins.mediapipe.html">lmpipe.plugins.mediapipe package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.plugins.mediapipe.face.html">lmpipe.plugins.mediapipe.face package</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="lmpipe.plugins.mediapipe.face.args.html">lmpipe.plugins.mediapipe.face.args module</a></li>
+<li class="toctree-l6"><a class="reference internal" href="lmpipe.plugins.mediapipe.face.main.html">lmpipe.plugins.mediapipe.face.main module</a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.plugins.mediapipe.hand.html">lmpipe.plugins.mediapipe.hand package</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="lmpipe.plugins.mediapipe.hand.args.html">lmpipe.plugins.mediapipe.hand.args module</a></li>
+<li class="toctree-l6"><a class="reference internal" href="lmpipe.plugins.mediapipe.hand.main.html">lmpipe.plugins.mediapipe.hand.main module</a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.plugins.mediapipe.pose.html">lmpipe.plugins.mediapipe.pose package</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="lmpipe.plugins.mediapipe.pose.args.html">lmpipe.plugins.mediapipe.pose.args module</a></li>
+<li class="toctree-l6"><a class="reference internal" href="lmpipe.plugins.mediapipe.pose.main.html">lmpipe.plugins.mediapipe.pose.main module</a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.plugins.mediapipe.args.html">lmpipe.plugins.mediapipe.args module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.plugins.mediapipe.core.html">lmpipe.plugins.mediapipe.core module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.plugins.loader.html">lmpipe.plugins.loader module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">lmpipe.options module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lmpipe.utils.html">lmpipe.utils module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+    </nav>
+    <template data-toggle-item-template>
+        <button class="btn btn-sm btn-link toctree-expand" type="button">
+            <span class="sr-only">Toggle menu contents</span>
+        </button>
+    </template>
+</div>
+                    <div class="d-lg-none border-bottom">
+                        
+                    </div>
+                </div>
+            </aside>
+            <div class="col-12 col-lg-9 pt-5">
+                <header class="row align-items-baseline">
+                    <div class="col">
+                        <nav aria-label="breadcrumb">
+    <ol class="breadcrumb m-0 p-0 bg-transparent">
+        <li class="breadcrumb-item"><a href="index.html">Docs</a></li>
+            <li class="breadcrumb-item"><a href="modules.html">lmpipe</a></li>
+            <li class="breadcrumb-item"><a href="lmpipe.html">lmpipe package</a></li>
+        <li class="breadcrumb-item active" aria-current="page">lmpipe.options module</li>
+    </ol>
+</nav>
+                    </div>
+                    <div class="col-sm-12 col-lg-auto mt-3 mt-lg-3">
+                        <noscript>
+                            <p>JavaScript is required to toggle light/dark mode..</p>
+                        </noscript>
+                        <button id="wagtail-theme" class="btn btn-sm btn-light text-decoration-none" type="button">
+                            <span class="dark-only"><i class="fas fa-sun"></i> Light mode</span>
+                            <span class="light-only"><i class="fas fa-moon"></i> Dark mode</span>
+                        </button>
+    <a class="btn btn-sm btn-light text-decoration-none" href="https://github.com/wagtail/sphinx_wagtail_theme/blob/main/docs/lmpipe.options.rst" rel="nofollow">
+        <span class="btn-icon"><span class="fab fa-github"></span></span>
+        <span class="btn-text">Edit on GitHub</span>
+    </a>
+    <a class="btn btn-sm btn-light text-decoration-none" href="_sources/lmpipe.options.rst.txt" rel="nofollow">
+        <span class="btn-icon"><span class="fas fa-code"></span></span>
+        <span class="btn-text">View source</span>
+    </a>
+                        
+                    </div>
+                </header>
+                <div class="row" >
+                    <div class="col-12">
+                        <hr class="w-100 my-4">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-lg-9 order-last order-lg-first rst-content">
+                        <main role="main" id="main">
+    <section id="module-lmpipe.options">
+<span id="lmpipe-options-module"></span><h1>lmpipe.options module<a class="headerlink" href="#module-lmpipe.options" title="Link to this heading">¶</a></h1>
+<p>Configuration options for the LMPipe pipeline.</p>
+<p>This module defines TypedDict classes and default configurations for
+output, executor, lmpipe options used throughout the pipeline processing.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.DEFAULT_OUTPUT_OPTIONS">
+<span class="sig-prename descclassname"><span class="pre">lmpipe.options.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_OUTPUT_OPTIONS</span></span><a class="headerlink" href="#lmpipe.options.DEFAULT_OUTPUT_OPTIONS" title="Link to this definition">¶</a></dt>
+<dd><p>Default output configuration options..</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#lmpipe.options.OutputOptions" title="lmpipe.options.OutputOptions"><code class="xref py py-class docutils literal notranslate"><span class="pre">OutputOptions</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.DEFAULT_EXECUTOR_OPTIONS">
+<span class="sig-prename descclassname"><span class="pre">lmpipe.options.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_EXECUTOR_OPTIONS</span></span><a class="headerlink" href="#lmpipe.options.DEFAULT_EXECUTOR_OPTIONS" title="Link to this definition">¶</a></dt>
+<dd><p>Default executor configuration options..</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#lmpipe.options.ExecutorOptions" title="lmpipe.options.ExecutorOptions"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExecutorOptions</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.DEFAULT_LMPIPE_OPTIONS">
+<span class="sig-prename descclassname"><span class="pre">lmpipe.options.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_LMPIPE_OPTIONS</span></span><a class="headerlink" href="#lmpipe.options.DEFAULT_LMPIPE_OPTIONS" title="Link to this definition">¶</a></dt>
+<dd><p>Combined default lmpipe configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#lmpipe.options.LMPipeOptions" title="lmpipe.options.LMPipeOptions"><code class="xref py py-class docutils literal notranslate"><span class="pre">LMPipeOptions</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptions">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lmpipe.options.</span></span><span class="sig-name descname"><span class="pre">OutputOptions</span></span><a class="headerlink" href="#lmpipe.options.OutputOptions" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TypedDict</span></code></p>
+<p>Type definition for output configuration options.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptions.landmarks_matrix_save_format">
+<span class="sig-name descname"><span class="pre">landmarks_matrix_save_format</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code><span class="pre">[</span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'.npy'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'.csv'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'.json'</span></code><span class="pre">]]</span></em><a class="headerlink" href="#lmpipe.options.OutputOptions.landmarks_matrix_save_format" title="Link to this definition">¶</a></dt>
+<dd><p>format to save landmarks matrix, default is None</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptions.landmarks_matrix_save_mode">
+<span class="sig-name descname"><span class="pre">landmarks_matrix_save_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'skip'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'overwrite'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'postfix'</span></code><span class="pre">]</span></em><a class="headerlink" href="#lmpipe.options.OutputOptions.landmarks_matrix_save_mode" title="Link to this definition">¶</a></dt>
+<dd><p>mode to save landmarks matrix, default is “skip”</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptions.annotated_frames_show_format">
+<span class="sig-name descname"><span class="pre">annotated_frames_show_format</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code><span class="pre">[</span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'cv2'</span></code><span class="pre">]]</span></em><a class="headerlink" href="#lmpipe.options.OutputOptions.annotated_frames_show_format" title="Link to this definition">¶</a></dt>
+<dd><p>format to show annotated frames, default is None</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptions.annotated_frames_save_format">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_format</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code><span class="pre">[</span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'cv2'</span></code><span class="pre">]]</span></em><a class="headerlink" href="#lmpipe.options.OutputOptions.annotated_frames_save_format" title="Link to this definition">¶</a></dt>
+<dd><p>format to save annotated frames, default is None</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptions.annotated_frames_save_mode">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'skip'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'overwrite'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'postfix'</span></code><span class="pre">]</span></em><a class="headerlink" href="#lmpipe.options.OutputOptions.annotated_frames_save_mode" title="Link to this definition">¶</a></dt>
+<dd><p>mode to save annotated frames, default is “skip”</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptions.annotated_frames_save_width">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_width</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#lmpipe.options.OutputOptions.annotated_frames_save_width" title="Link to this definition">¶</a></dt>
+<dd><p>width to save annotated frames</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptions.annotated_frames_save_height">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_height</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#lmpipe.options.OutputOptions.annotated_frames_save_height" title="Link to this definition">¶</a></dt>
+<dd><p>height to save annotated frames</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptions.annotated_frames_save_fps">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_fps</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></em><a class="headerlink" href="#lmpipe.options.OutputOptions.annotated_frames_save_fps" title="Link to this definition">¶</a></dt>
+<dd><p>fps to save annotated frames</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptions.annotated_frames_save_fourcc">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_fourcc</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#lmpipe.options.OutputOptions.annotated_frames_save_fourcc" title="Link to this definition">¶</a></dt>
+<dd><p>fourcc to save annotated frames, default is “mp4v”</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptions.annotated_frames_save_ext">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_ext</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#lmpipe.options.OutputOptions.annotated_frames_save_ext" title="Link to this definition">¶</a></dt>
+<dd><p>file extension to save annotated frames, default is “.mp4”</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptionsPartial">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lmpipe.options.</span></span><span class="sig-name descname"><span class="pre">OutputOptionsPartial</span></span><a class="headerlink" href="#lmpipe.options.OutputOptionsPartial" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TypedDict</span></code></p>
+<p>Partial type definition for output configuration options.</p>
+<p>Same as OutputOptions but with all fields optional.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptionsPartial.landmarks_matrix_save_format">
+<span class="sig-name descname"><span class="pre">landmarks_matrix_save_format</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code><span class="pre">[</span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'.npy'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'.csv'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'.json'</span></code><span class="pre">]]</span></em><a class="headerlink" href="#lmpipe.options.OutputOptionsPartial.landmarks_matrix_save_format" title="Link to this definition">¶</a></dt>
+<dd><p>format to save landmarks matrix, default is None</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptionsPartial.landmarks_matrix_save_mode">
+<span class="sig-name descname"><span class="pre">landmarks_matrix_save_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'skip'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'overwrite'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'postfix'</span></code><span class="pre">]</span></em><a class="headerlink" href="#lmpipe.options.OutputOptionsPartial.landmarks_matrix_save_mode" title="Link to this definition">¶</a></dt>
+<dd><p>mode to save landmarks matrix, default is “skip”</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptionsPartial.annotated_frames_show_format">
+<span class="sig-name descname"><span class="pre">annotated_frames_show_format</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code><span class="pre">[</span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'cv2'</span></code><span class="pre">]]</span></em><a class="headerlink" href="#lmpipe.options.OutputOptionsPartial.annotated_frames_show_format" title="Link to this definition">¶</a></dt>
+<dd><p>format to show annotated frames, default is None</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptionsPartial.annotated_frames_save_format">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_format</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code><span class="pre">[</span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'cv2'</span></code><span class="pre">]]</span></em><a class="headerlink" href="#lmpipe.options.OutputOptionsPartial.annotated_frames_save_format" title="Link to this definition">¶</a></dt>
+<dd><p>format to save annotated frames, default is None</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptionsPartial.annotated_frames_save_mode">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'skip'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'overwrite'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'postfix'</span></code><span class="pre">]</span></em><a class="headerlink" href="#lmpipe.options.OutputOptionsPartial.annotated_frames_save_mode" title="Link to this definition">¶</a></dt>
+<dd><p>mode to save annotated frames, default is “skip”</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptionsPartial.annotated_frames_save_width">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_width</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#lmpipe.options.OutputOptionsPartial.annotated_frames_save_width" title="Link to this definition">¶</a></dt>
+<dd><p>width to save annotated frames</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptionsPartial.annotated_frames_save_height">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_height</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#lmpipe.options.OutputOptionsPartial.annotated_frames_save_height" title="Link to this definition">¶</a></dt>
+<dd><p>height to save annotated frames</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptionsPartial.annotated_frames_save_fps">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_fps</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></em><a class="headerlink" href="#lmpipe.options.OutputOptionsPartial.annotated_frames_save_fps" title="Link to this definition">¶</a></dt>
+<dd><p>fps to save annotated frames</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptionsPartial.annotated_frames_save_fourcc">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_fourcc</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#lmpipe.options.OutputOptionsPartial.annotated_frames_save_fourcc" title="Link to this definition">¶</a></dt>
+<dd><p>fourcc to save annotated frames, default is “mp4v”</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.OutputOptionsPartial.annotated_frames_save_ext">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_ext</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#lmpipe.options.OutputOptionsPartial.annotated_frames_save_ext" title="Link to this definition">¶</a></dt>
+<dd><p>file extension to save annotated frames, default is “.mp4”</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="lmpipe.options.ExecutorOptions">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lmpipe.options.</span></span><span class="sig-name descname"><span class="pre">ExecutorOptions</span></span><a class="headerlink" href="#lmpipe.options.ExecutorOptions" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TypedDict</span></code></p>
+<p>Type definition for executor configuration options.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.ExecutorOptions.max_workers">
+<span class="sig-name descname"><span class="pre">max_workers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#lmpipe.options.ExecutorOptions.max_workers" title="Link to this definition">¶</a></dt>
+<dd><p>maximum number of worker threads/processes, default is 4</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.ExecutorOptions.executor_mode">
+<span class="sig-name descname"><span class="pre">executor_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code><span class="pre">[</span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'batch'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'sample'</span></code><span class="pre">]]</span></em><a class="headerlink" href="#lmpipe.options.ExecutorOptions.executor_mode" title="Link to this definition">¶</a></dt>
+<dd><p>executor mode</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="lmpipe.options.ExecutorOptionsPartial">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lmpipe.options.</span></span><span class="sig-name descname"><span class="pre">ExecutorOptionsPartial</span></span><a class="headerlink" href="#lmpipe.options.ExecutorOptionsPartial" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TypedDict</span></code></p>
+<p>Partial type definition for executor configuration options.</p>
+<p>Same as ExecutorOptions but with all fields optional.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.ExecutorOptionsPartial.max_workers">
+<span class="sig-name descname"><span class="pre">max_workers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#lmpipe.options.ExecutorOptionsPartial.max_workers" title="Link to this definition">¶</a></dt>
+<dd><p>maximum number of worker threads/processes, default is 4</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.ExecutorOptionsPartial.executor_mode">
+<span class="sig-name descname"><span class="pre">executor_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code><span class="pre">[</span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'batch'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'sample'</span></code><span class="pre">]]</span></em><a class="headerlink" href="#lmpipe.options.ExecutorOptionsPartial.executor_mode" title="Link to this definition">¶</a></dt>
+<dd><p>executor mode</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptions">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lmpipe.options.</span></span><span class="sig-name descname"><span class="pre">LMPipeOptions</span></span><a class="headerlink" href="#lmpipe.options.LMPipeOptions" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lmpipe.options.OutputOptions" title="lmpipe.options.OutputOptions"><code class="xref py py-class docutils literal notranslate"><span class="pre">OutputOptions</span></code></a>, <a class="reference internal" href="#lmpipe.options.ExecutorOptions" title="lmpipe.options.ExecutorOptions"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExecutorOptions</span></code></a></p>
+<p>Complete lmpipe configuration options.</p>
+<p>Combines output and executor options into a single configuration type.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptions.landmarks_matrix_save_format">
+<span class="sig-name descname"><span class="pre">landmarks_matrix_save_format</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code><span class="pre">[</span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'.npy'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'.csv'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'.json'</span></code><span class="pre">]]</span></em><a class="headerlink" href="#lmpipe.options.LMPipeOptions.landmarks_matrix_save_format" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptions.landmarks_matrix_save_mode">
+<span class="sig-name descname"><span class="pre">landmarks_matrix_save_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'skip'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'overwrite'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'postfix'</span></code><span class="pre">]</span></em><a class="headerlink" href="#lmpipe.options.LMPipeOptions.landmarks_matrix_save_mode" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptions.annotated_frames_show_format">
+<span class="sig-name descname"><span class="pre">annotated_frames_show_format</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code><span class="pre">[</span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'cv2'</span></code><span class="pre">]]</span></em><a class="headerlink" href="#lmpipe.options.LMPipeOptions.annotated_frames_show_format" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptions.annotated_frames_save_format">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_format</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code><span class="pre">[</span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'cv2'</span></code><span class="pre">]]</span></em><a class="headerlink" href="#lmpipe.options.LMPipeOptions.annotated_frames_save_format" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptions.annotated_frames_save_mode">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'skip'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'overwrite'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'postfix'</span></code><span class="pre">]</span></em><a class="headerlink" href="#lmpipe.options.LMPipeOptions.annotated_frames_save_mode" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptions.annotated_frames_save_width">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_width</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#lmpipe.options.LMPipeOptions.annotated_frames_save_width" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptions.annotated_frames_save_height">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_height</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#lmpipe.options.LMPipeOptions.annotated_frames_save_height" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptions.annotated_frames_save_fps">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_fps</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></em><a class="headerlink" href="#lmpipe.options.LMPipeOptions.annotated_frames_save_fps" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptions.annotated_frames_save_fourcc">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_fourcc</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#lmpipe.options.LMPipeOptions.annotated_frames_save_fourcc" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptions.annotated_frames_save_ext">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_ext</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#lmpipe.options.LMPipeOptions.annotated_frames_save_ext" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptions.max_workers">
+<span class="sig-name descname"><span class="pre">max_workers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#lmpipe.options.LMPipeOptions.max_workers" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptions.executor_mode">
+<span class="sig-name descname"><span class="pre">executor_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code><span class="pre">[</span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'batch'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'sample'</span></code><span class="pre">]]</span></em><a class="headerlink" href="#lmpipe.options.LMPipeOptions.executor_mode" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptionsPartial">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lmpipe.options.</span></span><span class="sig-name descname"><span class="pre">LMPipeOptionsPartial</span></span><a class="headerlink" href="#lmpipe.options.LMPipeOptionsPartial" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lmpipe.options.OutputOptionsPartial" title="lmpipe.options.OutputOptionsPartial"><code class="xref py py-class docutils literal notranslate"><span class="pre">OutputOptionsPartial</span></code></a>, <a class="reference internal" href="#lmpipe.options.ExecutorOptionsPartial" title="lmpipe.options.ExecutorOptionsPartial"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExecutorOptionsPartial</span></code></a></p>
+<p>Partial complete lmpipe configuration options.</p>
+<p>combines output and executor options into a single configuration type.</p>
+<blockquote>
+<div><p>Same as LMPipeOptions but with all fields optional, useful for
+overriding specific configuration values.</p>
+</div></blockquote>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptionsPartial.landmarks_matrix_save_format">
+<span class="sig-name descname"><span class="pre">landmarks_matrix_save_format</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code><span class="pre">[</span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'.npy'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'.csv'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'.json'</span></code><span class="pre">]]</span></em><a class="headerlink" href="#lmpipe.options.LMPipeOptionsPartial.landmarks_matrix_save_format" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptionsPartial.landmarks_matrix_save_mode">
+<span class="sig-name descname"><span class="pre">landmarks_matrix_save_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'skip'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'overwrite'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'postfix'</span></code><span class="pre">]</span></em><a class="headerlink" href="#lmpipe.options.LMPipeOptionsPartial.landmarks_matrix_save_mode" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptionsPartial.annotated_frames_show_format">
+<span class="sig-name descname"><span class="pre">annotated_frames_show_format</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code><span class="pre">[</span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'cv2'</span></code><span class="pre">]]</span></em><a class="headerlink" href="#lmpipe.options.LMPipeOptionsPartial.annotated_frames_show_format" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_format">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_format</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code><span class="pre">[</span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'cv2'</span></code><span class="pre">]]</span></em><a class="headerlink" href="#lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_format" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_mode">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'skip'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'overwrite'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'postfix'</span></code><span class="pre">]</span></em><a class="headerlink" href="#lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_mode" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_width">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_width</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_width" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_height">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_height</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_height" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_fps">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_fps</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></em><a class="headerlink" href="#lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_fps" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_fourcc">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_fourcc</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_fourcc" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_ext">
+<span class="sig-name descname"><span class="pre">annotated_frames_save_ext</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_ext" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptionsPartial.max_workers">
+<span class="sig-name descname"><span class="pre">max_workers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#lmpipe.options.LMPipeOptionsPartial.max_workers" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.options.LMPipeOptionsPartial.executor_mode">
+<span class="sig-name descname"><span class="pre">executor_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code><span class="pre">[</span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'batch'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'sample'</span></code><span class="pre">]]</span></em><a class="headerlink" href="#lmpipe.options.LMPipeOptionsPartial.executor_mode" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+
+</main>
+                        <nav aria-label="Page navigation" class="py-4 my-5 clearfix font-weight-bold border-top">
+    <a class="float-left" href="lmpipe.plugins.loader.html" title="Previous">
+        <span aria-hidden="true">←&nbsp;</span>lmpipe.plugins.loader module
+    </a>
+    <a class="float-right" href="lmpipe.utils.html" title="Next">
+        lmpipe.utils module <span aria-hidden="true">&nbsp;→</span>
+    </a>
+</nav>
+                    </div>
+                    
+                    <nav class="col-12 col-lg-3 pb-4">
+                        <div class="sticky-top toc page-toc" aria-labelledby="page-toc-heading">
+                            <p class="font-weight-bold" id="page-toc-heading">Page contents</p>
+                            <ul>
+<li><a class="reference internal" href="#">lmpipe.options module</a><ul>
+<li><a class="reference internal" href="#lmpipe.options.DEFAULT_OUTPUT_OPTIONS"><code class="docutils literal notranslate"><span class="pre">DEFAULT_OUTPUT_OPTIONS</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.DEFAULT_EXECUTOR_OPTIONS"><code class="docutils literal notranslate"><span class="pre">DEFAULT_EXECUTOR_OPTIONS</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.DEFAULT_LMPIPE_OPTIONS"><code class="docutils literal notranslate"><span class="pre">DEFAULT_LMPIPE_OPTIONS</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptions"><code class="docutils literal notranslate"><span class="pre">OutputOptions</span></code></a><ul>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptions.landmarks_matrix_save_format"><code class="docutils literal notranslate"><span class="pre">OutputOptions.landmarks_matrix_save_format</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptions.landmarks_matrix_save_mode"><code class="docutils literal notranslate"><span class="pre">OutputOptions.landmarks_matrix_save_mode</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptions.annotated_frames_show_format"><code class="docutils literal notranslate"><span class="pre">OutputOptions.annotated_frames_show_format</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptions.annotated_frames_save_format"><code class="docutils literal notranslate"><span class="pre">OutputOptions.annotated_frames_save_format</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptions.annotated_frames_save_mode"><code class="docutils literal notranslate"><span class="pre">OutputOptions.annotated_frames_save_mode</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptions.annotated_frames_save_width"><code class="docutils literal notranslate"><span class="pre">OutputOptions.annotated_frames_save_width</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptions.annotated_frames_save_height"><code class="docutils literal notranslate"><span class="pre">OutputOptions.annotated_frames_save_height</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptions.annotated_frames_save_fps"><code class="docutils literal notranslate"><span class="pre">OutputOptions.annotated_frames_save_fps</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptions.annotated_frames_save_fourcc"><code class="docutils literal notranslate"><span class="pre">OutputOptions.annotated_frames_save_fourcc</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptions.annotated_frames_save_ext"><code class="docutils literal notranslate"><span class="pre">OutputOptions.annotated_frames_save_ext</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptionsPartial"><code class="docutils literal notranslate"><span class="pre">OutputOptionsPartial</span></code></a><ul>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptionsPartial.landmarks_matrix_save_format"><code class="docutils literal notranslate"><span class="pre">OutputOptionsPartial.landmarks_matrix_save_format</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptionsPartial.landmarks_matrix_save_mode"><code class="docutils literal notranslate"><span class="pre">OutputOptionsPartial.landmarks_matrix_save_mode</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptionsPartial.annotated_frames_show_format"><code class="docutils literal notranslate"><span class="pre">OutputOptionsPartial.annotated_frames_show_format</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptionsPartial.annotated_frames_save_format"><code class="docutils literal notranslate"><span class="pre">OutputOptionsPartial.annotated_frames_save_format</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptionsPartial.annotated_frames_save_mode"><code class="docutils literal notranslate"><span class="pre">OutputOptionsPartial.annotated_frames_save_mode</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptionsPartial.annotated_frames_save_width"><code class="docutils literal notranslate"><span class="pre">OutputOptionsPartial.annotated_frames_save_width</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptionsPartial.annotated_frames_save_height"><code class="docutils literal notranslate"><span class="pre">OutputOptionsPartial.annotated_frames_save_height</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptionsPartial.annotated_frames_save_fps"><code class="docutils literal notranslate"><span class="pre">OutputOptionsPartial.annotated_frames_save_fps</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptionsPartial.annotated_frames_save_fourcc"><code class="docutils literal notranslate"><span class="pre">OutputOptionsPartial.annotated_frames_save_fourcc</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.OutputOptionsPartial.annotated_frames_save_ext"><code class="docutils literal notranslate"><span class="pre">OutputOptionsPartial.annotated_frames_save_ext</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#lmpipe.options.ExecutorOptions"><code class="docutils literal notranslate"><span class="pre">ExecutorOptions</span></code></a><ul>
+<li><a class="reference internal" href="#lmpipe.options.ExecutorOptions.max_workers"><code class="docutils literal notranslate"><span class="pre">ExecutorOptions.max_workers</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.ExecutorOptions.executor_mode"><code class="docutils literal notranslate"><span class="pre">ExecutorOptions.executor_mode</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#lmpipe.options.ExecutorOptionsPartial"><code class="docutils literal notranslate"><span class="pre">ExecutorOptionsPartial</span></code></a><ul>
+<li><a class="reference internal" href="#lmpipe.options.ExecutorOptionsPartial.max_workers"><code class="docutils literal notranslate"><span class="pre">ExecutorOptionsPartial.max_workers</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.ExecutorOptionsPartial.executor_mode"><code class="docutils literal notranslate"><span class="pre">ExecutorOptionsPartial.executor_mode</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptions"><code class="docutils literal notranslate"><span class="pre">LMPipeOptions</span></code></a><ul>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptions.landmarks_matrix_save_format"><code class="docutils literal notranslate"><span class="pre">LMPipeOptions.landmarks_matrix_save_format</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptions.landmarks_matrix_save_mode"><code class="docutils literal notranslate"><span class="pre">LMPipeOptions.landmarks_matrix_save_mode</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptions.annotated_frames_show_format"><code class="docutils literal notranslate"><span class="pre">LMPipeOptions.annotated_frames_show_format</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptions.annotated_frames_save_format"><code class="docutils literal notranslate"><span class="pre">LMPipeOptions.annotated_frames_save_format</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptions.annotated_frames_save_mode"><code class="docutils literal notranslate"><span class="pre">LMPipeOptions.annotated_frames_save_mode</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptions.annotated_frames_save_width"><code class="docutils literal notranslate"><span class="pre">LMPipeOptions.annotated_frames_save_width</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptions.annotated_frames_save_height"><code class="docutils literal notranslate"><span class="pre">LMPipeOptions.annotated_frames_save_height</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptions.annotated_frames_save_fps"><code class="docutils literal notranslate"><span class="pre">LMPipeOptions.annotated_frames_save_fps</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptions.annotated_frames_save_fourcc"><code class="docutils literal notranslate"><span class="pre">LMPipeOptions.annotated_frames_save_fourcc</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptions.annotated_frames_save_ext"><code class="docutils literal notranslate"><span class="pre">LMPipeOptions.annotated_frames_save_ext</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptions.max_workers"><code class="docutils literal notranslate"><span class="pre">LMPipeOptions.max_workers</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptions.executor_mode"><code class="docutils literal notranslate"><span class="pre">LMPipeOptions.executor_mode</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptionsPartial"><code class="docutils literal notranslate"><span class="pre">LMPipeOptionsPartial</span></code></a><ul>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptionsPartial.landmarks_matrix_save_format"><code class="docutils literal notranslate"><span class="pre">LMPipeOptionsPartial.landmarks_matrix_save_format</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptionsPartial.landmarks_matrix_save_mode"><code class="docutils literal notranslate"><span class="pre">LMPipeOptionsPartial.landmarks_matrix_save_mode</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptionsPartial.annotated_frames_show_format"><code class="docutils literal notranslate"><span class="pre">LMPipeOptionsPartial.annotated_frames_show_format</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_format"><code class="docutils literal notranslate"><span class="pre">LMPipeOptionsPartial.annotated_frames_save_format</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_mode"><code class="docutils literal notranslate"><span class="pre">LMPipeOptionsPartial.annotated_frames_save_mode</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_width"><code class="docutils literal notranslate"><span class="pre">LMPipeOptionsPartial.annotated_frames_save_width</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_height"><code class="docutils literal notranslate"><span class="pre">LMPipeOptionsPartial.annotated_frames_save_height</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_fps"><code class="docutils literal notranslate"><span class="pre">LMPipeOptionsPartial.annotated_frames_save_fps</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_fourcc"><code class="docutils literal notranslate"><span class="pre">LMPipeOptionsPartial.annotated_frames_save_fourcc</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptionsPartial.annotated_frames_save_ext"><code class="docutils literal notranslate"><span class="pre">LMPipeOptionsPartial.annotated_frames_save_ext</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptionsPartial.max_workers"><code class="docutils literal notranslate"><span class="pre">LMPipeOptionsPartial.max_workers</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.options.LMPipeOptionsPartial.executor_mode"><code class="docutils literal notranslate"><span class="pre">LMPipeOptionsPartial.executor_mode</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+                        </div>
+                    </nav>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer class="container-fluid bg-primary text-light">
+        <div class="container">
+            <div class="row">
+        <div class="col p-4">
+            
+                <nav aria-label="Footer">
+                    <ul class="nav justify-content-center mb-2">
+                        
+                            
+                            
+                            <li class="nav-item"><a class="nav-link text-light"  href="https://wagtail.org/features/">Features</a></li>
+                        
+                            
+                            
+                            <li class="nav-item"><a class="nav-link text-light"  href="https://wagtail.org/about-wagtail/"> About Wagtail</a></li>
+                        
+                            
+                            
+                            <li class="nav-item"><a class="nav-link text-light"  href="https://wagtail.org/services/"> Services</a></li>
+                        
+                            
+                            
+                            <li class="nav-item"><a class="nav-link text-light"  href="https://wagtail.org/blog/"> Blog</a></li>
+                        
+                            
+                            
+                            <li class="nav-item"><a class="nav-link text-light"  href="https://wagtail.org/packages/"> Packages</a></li>
+                        
+                            
+                            
+                            <li class="nav-item"><a class="nav-link text-light"  href="https://wagtail.org/developers/"> Developers</a></li>
+                        
+                    </ul>
+                </nav>
+            
+            <div class="text-center">
+                    &copy; Copyright 2025, ikeda
+            </div>
+            <div class="text-center text-white-50 font-italic mt-3">
+                <small>
+                    Created using
+                    <a class="text-white" href="https://github.com/wagtail/sphinx_wagtail_theme" rel="nofollow" target="_blank">
+                        Sphinx Wagtail Theme 6.5.0
+                    </a>
+                    and
+                    <a class="text-white" href="https://www.sphinx-doc.org/" rel="nofollow" target="_blank">
+                        Sphinx 8.2.3
+                    </a>
+                </small>
+            </div>
+        </div>
+    </div>
+        </div>
+    </footer>
+        <script src="_static/documentation_options.js?v=01f34227"></script>
+        <script src="_static/doctools.js?v=9bcbadda"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+        <script src="_static/copybutton.js?v=f281be69"></script>
+        <script type="text/javascript" src="_static/dist/theme.js"></script>
+        <script type="text/javascript" src="_static/dist/vendor.js"></script>
+        <script type="text/javascript" src="_static/searchtools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function() { Search.loadIndex("searchindex.js"); });
+        </script>
+        <script type="text/javascript" id="searchindexloader"></script>
+    </body>
+</html>

@@ -24,19 +24,17 @@ from .types import NDArrayFloat, NDArrayStr, ModeLiteral
 
 @dataclass
 class ProcessFrameResult:
-    """Data structure for frame processing results.
-    
-    Attributes:
-        frame_idx (int): Index of the processed frame.
-        headers (NDArrayStr): Array of landmark header strings.
-        landmarks (NDArrayFloat): Array of landmark coordinates.
-        annotated_frame (MatLike | None): Annotated frame image, or None if unavailable.
-    """
+    """Data structure for frame processing results."""
     frame_idx: int
+    "Index of the processed frame."
     headers: NDArrayStr
+    "Array of header strings for the landmarks."
     landmarks: NDArrayFloat
+    "Array of landmark coordinates."
     annotated_frame: MatLike | None
+    "Annotated frame image, if applicable."
     thread_ident: int
+    "Thread identifier for the processing frame."
 
 class BaseCollector(ABC):
     """Abstract base class for result collectors.
@@ -47,7 +45,9 @@ class BaseCollector(ABC):
     """
 
     skip_process: bool = False
+    "Flag to indicate if processing should be skipped."
     postfix_count: int = 0
+    "Counter for postfixes applied to file names."
 
     def __init__(self, lmpipe_options: LMPipeOptions):
         self.lmpipe_options = lmpipe_options

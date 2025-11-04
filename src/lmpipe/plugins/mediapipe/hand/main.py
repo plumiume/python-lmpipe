@@ -2,7 +2,7 @@ from typing import Literal
 from enum import IntEnum
 from numpy.typing import NDArray
 import numpy as np
-from cv2.typing import MatLike
+from cv2.typing import MatLike as _MatLike
 from mediapipe.tasks.python.core.base_options import BaseOptions # pyright: ignore[reportMissingTypeStubs]
 from mediapipe.tasks.python.vision.hand_landmarker import HandLandmarker, HandLandmarkerOptions # pyright: ignore[reportMissingTypeStubs]
 from mediapipe.tasks.python.components.containers.category import Category # pyright: ignore[reportMissingTypeStubs]
@@ -14,9 +14,11 @@ from ....estimator.holistic.main import HolisticPartEstimator
 from ..core import get_model, MediaPipeEstimator
 from .args import MediaPipeHandArgs
 
+type MatLike = _MatLike
 type NDArrayFloat = NDArray[np.floating]
 
 class HandNames(IntEnum):
+    """Enum for hand landmark names based on MediaPipe Hand Landmarker."""
     WRIST = 0
     THUMB_CMC = 1
     THUMB_MCP = 2
@@ -40,6 +42,14 @@ class HandNames(IntEnum):
     PINKY_TIP = 20
 
 class MediaPipeHandEstimator(MediaPipeEstimator, HolisticPartEstimator):
+    """MediaPipe Hand Landmarker estimator for LMPipe plugin.
+
+    This plugin uses MediaPipe's Hand Landmarker to detect hand landmarks in images.
+
+    Args:
+        hand_args (MediaPipeHandArgs): Arguments for configuring the hand landmarker.
+        category (Literal["left", "right"] | None): Specify which hand to prioritize ('left' or 'right').
+    """
 
     def __init__(
         self,

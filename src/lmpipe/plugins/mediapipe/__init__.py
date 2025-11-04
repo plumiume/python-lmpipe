@@ -1,3 +1,22 @@
+"""MediaPipe-based estimator plugins.
+
+This package provides estimator implementations using Google's MediaPipe
+library for pose, hand, and face landmark detection.
+
+Each estimator is registered as a plugin entry point and can be loaded
+dynamically by the plugin loader.
+
+Plugin entries:
+    - ``pose_entry``: MediaPipe pose estimation
+    - ``left_hand_entry``: MediaPipe left hand estimation
+    - ``right_hand_entry``: MediaPipe right hand estimation
+    - ``face_entry``: MediaPipe face mesh estimation
+
+Subpackages:
+    - ``pose``: MediaPipe pose estimator implementation
+    - ``hand``: MediaPipe hand estimator implementation
+    - ``face``: MediaPipe face mesh estimator implementation
+"""
 
 from absl import logging
 logging.set_verbosity(logging.ERROR)

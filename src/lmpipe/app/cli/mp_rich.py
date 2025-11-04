@@ -11,7 +11,8 @@ from pickle import PicklingError
 from threading import local, Thread
 from multiprocessing import Queue
 
-from rich.console import RenderableType, Live
+from rich.console import RenderableType
+from rich.live import Live
 from rich.prompt import PromptBase
 
 type RichObject = RenderableType | Live | PromptBase[Any]
@@ -113,7 +114,35 @@ class _RenderableRegistry:
 _renderable_registry = _RenderableRegistry()
 
 class RenderableRef[T: RichObject]:
+    """Reference to a renderable object managed by RichManager.
 
+    Note:
+        RenderableRef instances should be created via the
+        ``RichClient.initialize()`` method.
+
+    Examples::
+
+        from lmpipe.app.cli.mp_rich import RichManager
+        from rich.progress import Progress
+
+        manager = RichManager()
+        client = manager.client()
+
+        # Initialize a Progress renderable in the RichManager.
+        progress_ref = client.initialize(
+            Progress,
+            "[progress.description]{task.description}",
+            transient=True
+        )
+
+        # Use the Progress renderable via the reference.
+        task_id = client.call_method(
+            progress_ref,
+            Progress.add_task,
+            "Processing...", total=100
+        )
+    """
+    @_require_internal_calls("Create via RichClient.initialize() method.")
     def __init__(self, process_id: int, renderable_id: _RichObjectID):
         self._process_id = process_id
         self._renderable_id = renderable_id
@@ -135,11 +164,27 @@ class RenderableRef[T: RichObject]:
 
     @property
     def renderable_id(self) -> _RichObjectID:
+        """Get the unique ID of the renderable."""
         return self._renderable_id
 
 class RichManager:
 
-    _dummy_ref = RenderableRef[Any](process_id=-1, renderable_id=-1)
+    """Manager for Rich renderable objects across multiple processes.
+
+    This class manages Rich renderable objects in a separate thread,
+    allowing clients in different processes to create and manipulate
+    renderables via references.
+
+    Examples::
+
+        from lmpipe.app.cli.mp_rich import RichManager
+
+        manager = RichManager()
+        client = manager.client()
+    """
+
+    with _enable_internal_calls():
+        _dummy_ref = RenderableRef[Any](process_id=-1, renderable_id=-1)
 
     def __init__(self):
 
@@ -247,6 +292,7 @@ class RichManager:
             return _Response(item.ref, error=e)
 
     def start(self):
+        """Start the RichManager."""
 
         if self._state != _ManagerState.INITIALIZED:
             raise RuntimeError("RichManager has already been started or stopped.")
@@ -256,6 +302,7 @@ class RichManager:
         self._state = _ManagerState.STARTED
 
     def stop(self):
+        """Stop the RichManager."""
 
         if self._state != _ManagerState.STARTED:
             raise RuntimeError("RichManager is not running.")
@@ -292,6 +339,23 @@ class RichManager:
         return client_id
 
 class RichClient:
+    """Client for interacting with RichManager to manage renderable objects.
+
+    Note:
+        RichClient instances should be created via the
+        ``RichManager.client()`` method.
+
+    Examples::
+
+        from lmpipe.app.cli.mp_rich import RichManager
+        from rich.progress import Progress
+
+        manager = RichManager()
+        client = manager.client()
+
+        # Initialize a Progress renderable in the RichManager.
+        progress_ref = client.initialize(Progress)
+    """
 
     @_require_internal_calls("Create via RichManager.client() method.")
     def __init__(
@@ -312,6 +376,34 @@ class RichClient:
         self, func: Callable[P, T], /,
         *args: P.args, **kwargs: P.kwargs
         ) -> RenderableRef[T]:
+        """Initialize a renderable object in the RichManager.
+
+        Args:
+            func: The callable to create the renderable.
+            *args: Positional arguments to pass to the callable.
+            **kwargs: Keyword arguments to pass to the callable.
+
+        Returns:
+            :code:`RenderableRef[T]`: A reference to the initialized renderable.
+
+        Note:
+            The actual renderable object resides in the RichManager's thread.
+
+        Examples::
+
+            from lmpipe.app.cli.mp_rich import RichManager
+            from rich.progress import Progress
+
+            manager = RichManager()
+            client = manager.client()
+
+            # Initialize a Progress renderable in the RichManager.
+            progress_ref = client.initialize(
+                Progress,
+                "[progress.description]{task.description}",
+                transient=True
+            )
+        """
 
         request = _Request(
             client_id=self._client_id,
@@ -331,6 +423,44 @@ class RichClient:
         func: Callable[Concatenate[T, P], R], /,
         *args: P.args, **kwargs: P.kwargs
         ) -> R:
+
+        """Call a method on a renderable object in the RichManager.
+
+        Args:
+            ref: Reference to the renderable.
+            func: The method to call on the renderable.
+            *args: Positional arguments to pass to the method.
+            **kwargs: Keyword arguments to pass to the method.
+
+        Returns:
+            R: The result of the method call.
+
+        Note:
+            The actual renderable object resides in the RichManager's thread.
+
+        Examples::
+
+            from lmpipe.app.cli.mp_rich import RichManager
+            from rich.progress import Progress
+
+            manager = RichManager()
+            client = manager.client()
+
+            # Initialize a Progress renderable in the RichManager.
+            progress_ref = client.initialize(
+                Progress,
+                "[progress.description]{task.description}",
+                transient=True
+            )
+
+            # Use the Progress renderable via the reference.
+            task_id = client.call_method(
+                progress_ref,
+                "add_task",
+                description="Processing...",
+                total=100
+            )
+        """
 
         request = _Request(
             client_id=self._client_id,

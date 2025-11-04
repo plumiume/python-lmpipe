@@ -2,12 +2,15 @@ from abc import ABC, abstractmethod
 from functools import cache
 from numpy.typing import NDArray
 import numpy as np
-from cv2.typing import MatLike
+from cv2.typing import MatLike as _MatLike
+
+
 
 from .. import Estimator, headers, estimate, annotate
 
 from .args import HolisticArgs
 
+type MatLike = _MatLike
 type NDArrayFloat = NDArray[np.floating]
 
 ImageSlice = tuple[int, int, int, int] # top, bottom, left, right
@@ -16,8 +19,12 @@ class HolisticPartEstimator(Estimator, ABC):
     ...
 
 class HolisticPoseEstimator(HolisticPartEstimator, ABC):
+    """Abstract base class for holistic pose estimators.
 
-    
+    This class defines the interface for holistic pose estimators that can
+    estimate pose landmarks and provide clipping functions for hands and face.
+
+    """
 
     @abstractmethod
     def left_hand_clipfn(
@@ -26,6 +33,17 @@ class HolisticPoseEstimator(HolisticPartEstimator, ABC):
         idx: int,
         landmarks: NDArrayFloat
         ) -> ImageSlice | None:
+        """Get the image slice for the left hand based on pose landmarks.
+
+        Args:
+            frame_src (MatLike): The source image frame.
+            idx (int): The index of the frame in the video.
+            landmarks (NDArrayFloat): The estimated pose landmarks.
+
+        Returns:
+            :code:`ImageSlice | None`: The image slice (top, bottom, left, right) for the left hand,
+            or None if no clipping is needed.
+        """
         ...
 
     @abstractmethod
@@ -35,6 +53,17 @@ class HolisticPoseEstimator(HolisticPartEstimator, ABC):
         idx: int,
         landmarks: NDArrayFloat
         ) -> ImageSlice | None:
+        """Get the image slice for the right hand based on pose landmarks.
+
+        Args:
+            frame_src (MatLike): The source image frame.
+            idx (int): The index of the frame in the video.
+            landmarks (NDArrayFloat): The estimated pose landmarks.
+
+        Returns:
+            :code:`ImageSlice | None`: The image slice (top, bottom, left, right) for the right hand,
+            or None if no clipping is needed.
+        """
         ...
 
     @abstractmethod
@@ -44,9 +73,30 @@ class HolisticPoseEstimator(HolisticPartEstimator, ABC):
         idx: int,
         landmarks: NDArrayFloat
         ) -> ImageSlice | None:
+        """Get the image slice for the face based on pose landmarks.
+
+        Args:
+            frame_src (MatLike): The source image frame.
+            idx (int): The index of the frame in the video.
+            landmarks (NDArrayFloat): The estimated pose landmarks.
+
+        Returns:
+            :code:`ImageSlice | None`: The image slice (top, bottom, left, right) for the face,
+            or None if no clipping is needed.
+        """
         ...
 
 class HolisticEstimator(Estimator):
+    """Holistic estimator that combines pose, hand, and face estimators.
+
+    Args:
+        holistic_args (HolisticArgs.T): The arguments for the holistic estimator.
+        pose_estimator (HolisticPoseEstimator): The pose estimator.
+        left_hand_estimator (HolisticPartEstimator | None): The left hand estimator.
+        right_hand_estimator (HolisticPartEstimator | None): The right hand estimator.
+        face_estimator (HolisticPartEstimator | None): The face estimator.
+
+    """
 
     def __init__(
         self,

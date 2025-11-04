@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en" data-content_root="./">
+<head>
+    <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+        <title>lmpipe.interface package &mdash; lmpipe 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" type="text/css" href="_static/dist/fontawesome.css" />
+      <link rel="stylesheet" type="text/css" href="_static/dist/theme.css?v=310cf088" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+            <link rel="index" title="Index" href="genindex.html" />
+            <link rel="search" title="Search" href="search.html" />
+            <link rel="top" title="lmpipe 0.1.0 documentation" href="#" />
+            <link rel="up" title="lmpipe package" href="lmpipe.html" />
+            <link rel="next" title="lmpipe.interface.executor module" href="lmpipe.interface.executor.html" />
+            <link rel="prev" title="lmpipe.estimator.holistic.main module" href="lmpipe.estimator.holistic.main.html" />
+    </head>
+<body>
+    <script type="text/javascript" src="_static/dist/blocking.js"></script>
+    <header class="container-fluid bg-primary">
+        <a class="btn btn-sm btn-light skip-to-content-link" href="#main">Skip to content</a>
+        <div class="container-fluid">
+            <div class="navbar navbar-expand-lg navbar-dark font-weight-bold">
+                    <a href="index.html"
+                        title="Wagtail"
+                        class="logo navbar-brand"
+                    >
+                        <img src="_static/img/wagtail-logo-circle.svg" width="45" height="59" alt="Wagtail"
+                            class="logo-img"
+                        />
+                        Sphinx Wagtail Theme
+                    </a>
+                
+                
+                <button class="navbar-toggler btn btn-primary d-lg-none" type="button" data-toggle="collapse" data-target="#collapseSidebar" aria-expanded="false" aria-controls="collapseExample">
+                    <span class="navbar-toggler-icon"></span>
+                    <span class="sr-only">menu</span>
+                </button>
+            </div>
+        </div>
+    </header>
+    <div class="container-fluid">
+        <div class="row">
+            <aside class="col-12 col-lg-3 sidebar-container">
+                <div id="collapseSidebar" class="collapse sticky-top d-lg-block pt-5 pr-lg-4">
+<div id="searchbox" class="searchbox mb-6 px-1" role="search">
+    <form id="search-form" action="search.html" autocomplete="off" method="get" role="search">
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <div class="input-group-text border-right-0 bg-white py-3 pl-3 pr-2"><span class="fas fa-search"></span></div>
+            </div>
+            <input class="form-control py-3 pr-3 pl-1 h-100 border-left-0" type="search" name="q" placeholder="Search documentation" aria-label="Search documentation" id="searchinput" />
+        </div>
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div><div class="site-toc">
+    <nav class="toc mt-3" aria-label="Main menu">
+        <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">lmpipe</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="lmpipe.html">lmpipe package</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="lmpipe.app.html">lmpipe.app package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.app.cli.html">lmpipe.app.cli module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="lmpipe.collector.html">lmpipe.collector package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.collector.annotated_frames_viewer.html">lmpipe.collector.annotated_frames_viewer package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.collector.annotated_frames_viewer.options.html">lmpipe.collector.annotated_frames_viewer.options module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.collector.annotated_frames_viewer.viewers.html">lmpipe.collector.annotated_frames_viewer.viewers module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.collector.annotated_frames_writer.html">lmpipe.collector.annotated_frames_writer package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.collector.annotated_frames_writer.options.html">lmpipe.collector.annotated_frames_writer.options module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.collector.annotated_frames_writer.writers.html">lmpipe.collector.annotated_frames_writer.writers module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.collector.landmarks_matrix_writer.html">lmpipe.collector.landmarks_matrix_writer package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.collector.landmarks_matrix_writer.options.html">lmpipe.collector.landmarks_matrix_writer.options module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.collector.landmarks_matrix_writer.writers.html">lmpipe.collector.landmarks_matrix_writer.writers module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.collector.base.html">lmpipe.collector.base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.collector.types.html">lmpipe.collector.types module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="lmpipe.estimator.html">lmpipe.estimator package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.estimator.holistic.html">lmpipe.estimator.holistic package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.estimator.holistic.args.html">lmpipe.estimator.holistic.args module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.estimator.holistic.main.html">lmpipe.estimator.holistic.main module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">lmpipe.interface package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.interface.executor.html">lmpipe.interface.executor module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="lmpipe.plugins.html">lmpipe.plugins package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.plugins.mediapipe.html">lmpipe.plugins.mediapipe package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.plugins.mediapipe.face.html">lmpipe.plugins.mediapipe.face package</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="lmpipe.plugins.mediapipe.face.args.html">lmpipe.plugins.mediapipe.face.args module</a></li>
+<li class="toctree-l6"><a class="reference internal" href="lmpipe.plugins.mediapipe.face.main.html">lmpipe.plugins.mediapipe.face.main module</a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.plugins.mediapipe.hand.html">lmpipe.plugins.mediapipe.hand package</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="lmpipe.plugins.mediapipe.hand.args.html">lmpipe.plugins.mediapipe.hand.args module</a></li>
+<li class="toctree-l6"><a class="reference internal" href="lmpipe.plugins.mediapipe.hand.main.html">lmpipe.plugins.mediapipe.hand.main module</a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.plugins.mediapipe.pose.html">lmpipe.plugins.mediapipe.pose package</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="lmpipe.plugins.mediapipe.pose.args.html">lmpipe.plugins.mediapipe.pose.args module</a></li>
+<li class="toctree-l6"><a class="reference internal" href="lmpipe.plugins.mediapipe.pose.main.html">lmpipe.plugins.mediapipe.pose.main module</a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.plugins.mediapipe.args.html">lmpipe.plugins.mediapipe.args module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.plugins.mediapipe.core.html">lmpipe.plugins.mediapipe.core module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.plugins.loader.html">lmpipe.plugins.loader module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="lmpipe.options.html">lmpipe.options module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lmpipe.utils.html">lmpipe.utils module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+    </nav>
+    <template data-toggle-item-template>
+        <button class="btn btn-sm btn-link toctree-expand" type="button">
+            <span class="sr-only">Toggle menu contents</span>
+        </button>
+    </template>
+</div>
+                    <div class="d-lg-none border-bottom">
+                        
+                    </div>
+                </div>
+            </aside>
+            <div class="col-12 col-lg-9 pt-5">
+                <header class="row align-items-baseline">
+                    <div class="col">
+                        <nav aria-label="breadcrumb">
+    <ol class="breadcrumb m-0 p-0 bg-transparent">
+        <li class="breadcrumb-item"><a href="index.html">Docs</a></li>
+            <li class="breadcrumb-item"><a href="modules.html">lmpipe</a></li>
+            <li class="breadcrumb-item"><a href="lmpipe.html">lmpipe package</a></li>
+        <li class="breadcrumb-item active" aria-current="page">lmpipe.interface package</li>
+    </ol>
+</nav>
+                    </div>
+                    <div class="col-sm-12 col-lg-auto mt-3 mt-lg-3">
+                        <noscript>
+                            <p>JavaScript is required to toggle light/dark mode..</p>
+                        </noscript>
+                        <button id="wagtail-theme" class="btn btn-sm btn-light text-decoration-none" type="button">
+                            <span class="dark-only"><i class="fas fa-sun"></i> Light mode</span>
+                            <span class="light-only"><i class="fas fa-moon"></i> Dark mode</span>
+                        </button>
+    <a class="btn btn-sm btn-light text-decoration-none" href="https://github.com/wagtail/sphinx_wagtail_theme/blob/main/docs/lmpipe.interface.rst" rel="nofollow">
+        <span class="btn-icon"><span class="fab fa-github"></span></span>
+        <span class="btn-text">Edit on GitHub</span>
+    </a>
+    <a class="btn btn-sm btn-light text-decoration-none" href="_sources/lmpipe.interface.rst.txt" rel="nofollow">
+        <span class="btn-icon"><span class="fas fa-code"></span></span>
+        <span class="btn-text">View source</span>
+    </a>
+                        
+                    </div>
+                </header>
+                <div class="row" >
+                    <div class="col-12">
+                        <hr class="w-100 my-4">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-lg-9 order-last order-lg-first rst-content">
+                        <main role="main" id="main">
+    <section id="lmpipe-interface-package">
+<h1>lmpipe.interface package<a class="headerlink" href="#lmpipe-interface-package" title="Link to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="lmpipe.interface.executor.html">lmpipe.interface.executor module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="lmpipe.interface.executor.html#lmpipe.interface.executor.DummyExecutor"><code class="docutils literal notranslate"><span class="pre">DummyExecutor</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="lmpipe.interface.executor.html#lmpipe.interface.executor.ProcessPoolExecutor"><code class="docutils literal notranslate"><span class="pre">ProcessPoolExecutor</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="module-lmpipe.interface">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-lmpipe.interface" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="lmpipe.interface.dummy">
+<span class="sig-prename descclassname"><span class="pre">lmpipe.interface.</span></span><span class="sig-name descname"><span class="pre">dummy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.interface.dummy" title="Link to this definition">¶</a></dt>
+<dd><p>A no-operation function that does nothing.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lmpipe.interface.shutdown_listener">
+<span class="sig-prename descclassname"><span class="pre">lmpipe.interface.</span></span><span class="sig-name descname"><span class="pre">shutdown_listener</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">listener</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.interface.shutdown_listener" title="Link to this definition">¶</a></dt>
+<dd><p>Decorator to mark a method as a shutdown listener.</p>
+<p>This decorator can be used to mark a method as a shutdown listener,
+which will be called when the pipeline is shutting down.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>listener</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">(S)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code>) – The listener function to decorate.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="lmpipe.interface.LMPipeInterface">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lmpipe.interface.</span></span><span class="sig-name descname"><span class="pre">LMPipeInterface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">estimator</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.interface.LMPipeInterface" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Main interface for running landmark estimation pipelines.</p>
+<p>This class orchestrates the entire processing pipeline: input detection,
+executor management, frame processing, and output collection. It supports
+multiple input types (video files, image sequences, single images, camera streams)
+and multiple execution modes (sequential, batch parallel, sample parallel).</p>
+<p>The interface automatically detects input types and routes to the appropriate
+processing method. It manages executors (using loky for process pools) and
+uses thread-local storage to maintain references across worker processes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>estimator</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Estimator</span></code>) – The estimator instance for landmark detection.</p></li>
+<li><p><strong>**options</strong> – LMPipe options to override defaults (see <code class="xref py py-class docutils literal notranslate"><span class="pre">LMPipeOptions</span></code>).</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Basic usage with automatic input detection:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">lmpipe.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">LMPipeInterface</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lmpipe.estimator.holistic</span><span class="w"> </span><span class="kn">import</span> <span class="n">HolisticEstimator</span>
+
+<span class="n">estimator</span> <span class="o">=</span> <span class="n">HolisticEstimator</span><span class="p">()</span>
+<span class="n">interface</span> <span class="o">=</span> <span class="n">LMPipeInterface</span><span class="p">(</span><span class="n">estimator</span><span class="p">)</span>
+
+<span class="c1"># Process a single video file</span>
+<span class="n">interface</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s1">&#39;input.mp4&#39;</span><span class="p">,</span> <span class="s1">&#39;output/&#39;</span><span class="p">)</span>
+
+<span class="c1"># Process a directory of videos in batch mode</span>
+<span class="n">interface</span><span class="o">.</span><span class="n">run_batch</span><span class="p">(</span><span class="s1">&#39;videos/&#39;</span><span class="p">,</span> <span class="s1">&#39;output/&#39;</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Custom options and output formats:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">interface</span> <span class="o">=</span> <span class="n">LMPipeInterface</span><span class="p">(</span>
+    <span class="n">estimator</span><span class="p">,</span>
+    <span class="n">landmarks_matrix_save_format</span><span class="o">=</span><span class="s1">&#39;.csv&#39;</span><span class="p">,</span>
+    <span class="n">annotated_frames_save_format</span><span class="o">=</span><span class="s1">&#39;cv2&#39;</span><span class="p">,</span>
+    <span class="n">annotated_frames_show_format</span><span class="o">=</span><span class="s1">&#39;cv2&#39;</span>
+<span class="p">)</span>
+
+<span class="c1"># Process with custom options</span>
+<span class="n">interface</span><span class="o">.</span><span class="n">run_video</span><span class="p">(</span><span class="s1">&#39;input.mp4&#39;</span><span class="p">,</span> <span class="s1">&#39;output/&#39;</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Processing camera stream:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">interface</span><span class="o">.</span><span class="n">run_stream</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;output/&#39;</span><span class="p">)</span>  <span class="c1"># 0 is default camera</span>
+</pre></div>
+</div>
+<p>Override executors or iterators for custom behavior:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">CustomInterface</span><span class="p">(</span><span class="n">LMPipeInterface</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">configure_batch_executor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initializer</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
+        <span class="c1"># Custom executor configuration</span>
+        <span class="k">return</span> <span class="n">ProcessPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">initializer</span><span class="o">=</span><span class="n">initializer</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">configure_sample_iterator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_map</span><span class="p">):</span>
+        <span class="c1"># Add progress tracking</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+        <span class="k">return</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">sample_map</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Processing frames&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.interface.LMPipeInterface.estimator">
+<span class="sig-name descname"><span class="pre">estimator</span></span><a class="headerlink" href="#lmpipe.interface.LMPipeInterface.estimator" title="Link to this definition">¶</a></dt>
+<dd><p>The landmark estimator instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Estimator</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.interface.LMPipeInterface.lmpipe_options">
+<span class="sig-name descname"><span class="pre">lmpipe_options</span></span><a class="headerlink" href="#lmpipe.interface.LMPipeInterface.lmpipe_options" title="Link to this definition">¶</a></dt>
+<dd><p>Merged pipeline options.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">LMPipeOptions</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The interface uses thread-local storage to maintain references across
+worker processes. When using custom executors or modifying the pipeline,
+ensure thread-safety and proper initialization of worker processes.</p>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="lmpipe.interface.LMPipeInterface.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.interface.LMPipeInterface.run" title="Link to this definition">¶</a></dt>
+<dd><p>Run the pipeline on the given source and destination.</p>
+<p>Automatically detects the input type (file or directory) and runs the
+appropriate processing method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PathLike</span></code>) – Source path (file or directory).</p></li>
+<li><p><strong>dst</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PathLike</span></code>) – Destination path.</p></li>
+<li><p><strong>**options</strong> – Additional LMPipe options to override defaults.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>FileNotFoundError</strong> – If the source path does not exist.</p></li>
+<li><p><strong>ValueError</strong> – If the source path is neither a file nor a directory.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lmpipe.interface.LMPipeInterface.run_batch">
+<span class="sig-name descname"><span class="pre">run_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.interface.LMPipeInterface.run_batch" title="Link to this definition">¶</a></dt>
+<dd><p>Process multiple files in a directory in batch mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PathLike</span></code>) – Source directory path.</p></li>
+<li><p><strong>dst</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PathLike</span></code>) – Destination directory path.</p></li>
+<li><p><strong>**options</strong> – Additional LMPipe options to override defaults.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the source path is not a directory.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lmpipe.interface.LMPipeInterface.run_sample">
+<span class="sig-name descname"><span class="pre">run_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.interface.LMPipeInterface.run_sample" title="Link to this definition">¶</a></dt>
+<dd><p>Process a single file sample.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PathLike</span></code>) – Source file path.</p></li>
+<li><p><strong>dst</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PathLike</span></code>) – Destination path.</p></li>
+<li><p><strong>**options</strong> – Additional LMPipe options to override defaults.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the source path is not a file.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lmpipe.interface.LMPipeInterface.run_video">
+<span class="sig-name descname"><span class="pre">run_video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.interface.LMPipeInterface.run_video" title="Link to this definition">¶</a></dt>
+<dd><p>Process a video file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PathLike</span></code>) – Source video file path.</p></li>
+<li><p><strong>dst</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PathLike</span></code>) – Destination path.</p></li>
+<li><p><strong>**options</strong> – Additional LMPipe options to override defaults.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the source path is not a video file.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lmpipe.interface.LMPipeInterface.run_image_sequence">
+<span class="sig-name descname"><span class="pre">run_image_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.interface.LMPipeInterface.run_image_sequence" title="Link to this definition">¶</a></dt>
+<dd><p>Process an image sequence directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PathLike</span></code>) – Source directory containing image sequence.</p></li>
+<li><p><strong>dst</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PathLike</span></code>) – Destination path.</p></li>
+<li><p><strong>**options</strong> – Additional LMPipe options to override defaults.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the source path is not an image sequence directory.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lmpipe.interface.LMPipeInterface.run_image">
+<span class="sig-name descname"><span class="pre">run_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.interface.LMPipeInterface.run_image" title="Link to this definition">¶</a></dt>
+<dd><p>Process a single image file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PathLike</span></code>) – Source image file path.</p></li>
+<li><p><strong>dst</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PathLike</span></code>) – Destination path.</p></li>
+<li><p><strong>**options</strong> – Additional LMPipe options to override defaults.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the source path is not an image file.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lmpipe.interface.LMPipeInterface.run_stream">
+<span class="sig-name descname"><span class="pre">run_stream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.interface.LMPipeInterface.run_stream" title="Link to this definition">¶</a></dt>
+<dd><p>Process a camera stream or other video input device.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Camera index or device ID (typically 0 for default camera).</p></li>
+<li><p><strong>dst</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PathLike</span></code>) – Destination path for output.</p></li>
+<li><p><strong>**options</strong> – Additional LMPipe options to override defaults.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lmpipe.interface.LMPipeInterface.configure_batch_executor">
+<span class="sig-name descname"><span class="pre">configure_batch_executor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initializer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.interface.LMPipeInterface.configure_batch_executor" title="Link to this definition">¶</a></dt>
+<dd><p>Configure the executor for batch processing.</p>
+<p>This method can be overridden to customize the executor used for batch processing.
+By default, it returns a ProcessPoolExecutor when batch mode is enabled and max_workers &gt; 0,
+otherwise returns a DummyExecutor for sequential processing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>initializer</strong> (:py:class:<code class="docutils literal notranslate"><span class="pre">`Callable[[*Ts]`,</span> <span class="pre">:py:class:`None]`</span></code>) – Function to call to initialize each worker process.</p></li>
+<li><p><strong>options</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">LMPipeOptions</span></code>) – LMPipe options containing executor configuration.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="code docutils literal notranslate"><span class="pre">Executor</span></code> – Executor instance for batch processing.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lmpipe.interface.LMPipeInterface.configure_sample_executor">
+<span class="sig-name descname"><span class="pre">configure_sample_executor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initializer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.interface.LMPipeInterface.configure_sample_executor" title="Link to this definition">¶</a></dt>
+<dd><p>Configure the executor for sample processing.</p>
+<p>This method can be overridden to customize the executor used for sample processing.
+By default, it returns a ProcessPoolExecutor when sample mode is enabled and max_workers &gt; 0,
+otherwise returns a DummyExecutor for sequential processing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>initializer</strong> (:py:class:<code class="docutils literal notranslate"><span class="pre">`Callable[[*Ts]`,</span> <span class="pre">:py:class:`None]`</span></code>) – Function to call to initialize each worker process.</p></li>
+<li><p><strong>initargs</strong> (<code class="docutils literal notranslate"><span class="pre">tuple[*Ts]</span></code>) – Arguments to pass to the initializer function.</p></li>
+<li><p><strong>options</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">LMPipeOptions</span></code>) – LMPipe options containing executor configuration.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="code docutils literal notranslate"><span class="pre">Executor</span></code> – Executor instance for sample processing.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="lmpipe.interface.LMPipeInterface.BatchExecutorInitializer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BatchExecutorInitializer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interface</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.interface.LMPipeInterface.BatchExecutorInitializer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Initializer for batch executors.</p>
+<p>Registers the <a class="reference internal" href="#lmpipe.interface.LMPipeInterface" title="lmpipe.interface.LMPipeInterface"><code class="xref py py-class docutils literal notranslate"><span class="pre">LMPipeInterface</span></code></a> instance in thread-local storage
+for each worker process. Subclass this initializer to customize any
+per-worker setup required for batch execution.</p>
+<p>This class does not perform heavy initialization by default; it only
+ensures the interface instance is available to worker threads or
+processes via thread-local storage.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="lmpipe.interface.LMPipeInterface.SampleExecutorInitializer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SampleExecutorInitializer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interface</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.interface.LMPipeInterface.SampleExecutorInitializer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Initializer for sample executors.</p>
+<p>Registers the <a class="reference internal" href="#lmpipe.interface.LMPipeInterface" title="lmpipe.interface.LMPipeInterface"><code class="xref py py-class docutils literal notranslate"><span class="pre">LMPipeInterface</span></code></a> instance in thread-local storage
+for each worker process used during sample processing. Subclass to
+customize per-worker initialization for sample execution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lmpipe.interface.LMPipeInterface.on_determined_src_dst_length">
+<span class="sig-name descname"><span class="pre">on_determined_src_dst_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src_dst_length</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.interface.LMPipeInterface.on_determined_src_dst_length" title="Link to this definition">¶</a></dt>
+<dd><p>Called when the length of source-destination pairs is determined.</p>
+<p>This method can be overridden to perform actions based on the total number of
+source-destination pairs to be processed. For example, you could use this information
+to set up progress tracking or logging.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>src_dst_length</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The total number of source-destination pairs.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lmpipe.interface.LMPipeInterface.configure_batch_iterator">
+<span class="sig-name descname"><span class="pre">configure_batch_iterator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_map</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.interface.LMPipeInterface.configure_batch_iterator" title="Link to this definition">¶</a></dt>
+<dd><p>Configure the iterator for batch processing results.</p>
+<p>This method can be overridden to customize how batch processing results are iterated.
+For example, you could add progress tracking, filtering, or transformation logic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>batch_map</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable[T]</span></code>) – Iterable of batch processing results.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="code docutils literal notranslate"><span class="pre">Iterable[T]</span></code> – Iterable that may be modified or wrapped with additional functionality.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lmpipe.interface.LMPipeInterface.configure_sample_iterator">
+<span class="sig-name descname"><span class="pre">configure_sample_iterator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_map</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.interface.LMPipeInterface.configure_sample_iterator" title="Link to this definition">¶</a></dt>
+<dd><p>Configure the iterator for sample processing results.</p>
+<p>This method can be overridden to customize how sample processing results are iterated.
+For example, you could add progress tracking, filtering, or transformation logic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>sample_map</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable[T]</span></code>) – Iterable of sample processing results.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Iterable[T]</em> – Iterable that may be modified or wrapped with additional functionality.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lmpipe.interface.LMPipeInterface.configure_src_dst_iterator">
+<span class="sig-name descname"><span class="pre">configure_src_dst_iterator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src_dst_iter</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.interface.LMPipeInterface.configure_src_dst_iterator" title="Link to this definition">¶</a></dt>
+<dd><p>Configure the iterator for source-destination pairs.</p>
+<p>This method can be overridden to customize how source-destination pairs are iterated.
+For example, you could add filtering or transformation logic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>src_dst_iter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable[SrcDst]</span></code>) – Iterable of source-destination pairs.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="code docutils literal notranslate"><span class="pre">Iterable[SrcDst]</span></code> – Iterable that may be modified or wrapped with additional functionality.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.interface.LMPipeInterface.shutdown_listener_registry">
+<span class="sig-name descname"><span class="pre">shutdown_listener_registry</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{&lt;function</span> <span class="pre">LMPipeInterface._default_shutdown_listener&gt;}</span></em><a class="headerlink" href="#lmpipe.interface.LMPipeInterface.shutdown_listener_registry" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+</main>
+                        <nav aria-label="Page navigation" class="py-4 my-5 clearfix font-weight-bold border-top">
+    <a class="float-left" href="lmpipe.estimator.holistic.main.html" title="Previous">
+        <span aria-hidden="true">←&nbsp;</span>lmpipe.estimator.holistic.main module
+    </a>
+    <a class="float-right" href="lmpipe.interface.executor.html" title="Next">
+        lmpipe.interface.executor module <span aria-hidden="true">&nbsp;→</span>
+    </a>
+</nav>
+                    </div>
+                    
+                    <nav class="col-12 col-lg-3 pb-4">
+                        <div class="sticky-top toc page-toc" aria-labelledby="page-toc-heading">
+                            <p class="font-weight-bold" id="page-toc-heading">Page contents</p>
+                            <ul>
+<li><a class="reference internal" href="#">lmpipe.interface package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-lmpipe.interface">Module contents</a><ul>
+<li><a class="reference internal" href="#lmpipe.interface.dummy"><code class="docutils literal notranslate"><span class="pre">dummy()</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.interface.shutdown_listener"><code class="docutils literal notranslate"><span class="pre">shutdown_listener()</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.interface.LMPipeInterface"><code class="docutils literal notranslate"><span class="pre">LMPipeInterface</span></code></a><ul>
+<li><a class="reference internal" href="#lmpipe.interface.LMPipeInterface.estimator"><code class="docutils literal notranslate"><span class="pre">LMPipeInterface.estimator</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.interface.LMPipeInterface.lmpipe_options"><code class="docutils literal notranslate"><span class="pre">LMPipeInterface.lmpipe_options</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.interface.LMPipeInterface.run"><code class="docutils literal notranslate"><span class="pre">LMPipeInterface.run()</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.interface.LMPipeInterface.run_batch"><code class="docutils literal notranslate"><span class="pre">LMPipeInterface.run_batch()</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.interface.LMPipeInterface.run_sample"><code class="docutils literal notranslate"><span class="pre">LMPipeInterface.run_sample()</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.interface.LMPipeInterface.run_video"><code class="docutils literal notranslate"><span class="pre">LMPipeInterface.run_video()</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.interface.LMPipeInterface.run_image_sequence"><code class="docutils literal notranslate"><span class="pre">LMPipeInterface.run_image_sequence()</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.interface.LMPipeInterface.run_image"><code class="docutils literal notranslate"><span class="pre">LMPipeInterface.run_image()</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.interface.LMPipeInterface.run_stream"><code class="docutils literal notranslate"><span class="pre">LMPipeInterface.run_stream()</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.interface.LMPipeInterface.configure_batch_executor"><code class="docutils literal notranslate"><span class="pre">LMPipeInterface.configure_batch_executor()</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.interface.LMPipeInterface.configure_sample_executor"><code class="docutils literal notranslate"><span class="pre">LMPipeInterface.configure_sample_executor()</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.interface.LMPipeInterface.BatchExecutorInitializer"><code class="docutils literal notranslate"><span class="pre">LMPipeInterface.BatchExecutorInitializer</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.interface.LMPipeInterface.SampleExecutorInitializer"><code class="docutils literal notranslate"><span class="pre">LMPipeInterface.SampleExecutorInitializer</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.interface.LMPipeInterface.on_determined_src_dst_length"><code class="docutils literal notranslate"><span class="pre">LMPipeInterface.on_determined_src_dst_length()</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.interface.LMPipeInterface.configure_batch_iterator"><code class="docutils literal notranslate"><span class="pre">LMPipeInterface.configure_batch_iterator()</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.interface.LMPipeInterface.configure_sample_iterator"><code class="docutils literal notranslate"><span class="pre">LMPipeInterface.configure_sample_iterator()</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.interface.LMPipeInterface.configure_src_dst_iterator"><code class="docutils literal notranslate"><span class="pre">LMPipeInterface.configure_src_dst_iterator()</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.interface.LMPipeInterface.shutdown_listener_registry"><code class="docutils literal notranslate"><span class="pre">LMPipeInterface.shutdown_listener_registry</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+                        </div>
+                    </nav>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer class="container-fluid bg-primary text-light">
+        <div class="container">
+            <div class="row">
+        <div class="col p-4">
+            
+                <nav aria-label="Footer">
+                    <ul class="nav justify-content-center mb-2">
+                        
+                            
+                            
+                            <li class="nav-item"><a class="nav-link text-light"  href="https://wagtail.org/features/">Features</a></li>
+                        
+                            
+                            
+                            <li class="nav-item"><a class="nav-link text-light"  href="https://wagtail.org/about-wagtail/"> About Wagtail</a></li>
+                        
+                            
+                            
+                            <li class="nav-item"><a class="nav-link text-light"  href="https://wagtail.org/services/"> Services</a></li>
+                        
+                            
+                            
+                            <li class="nav-item"><a class="nav-link text-light"  href="https://wagtail.org/blog/"> Blog</a></li>
+                        
+                            
+                            
+                            <li class="nav-item"><a class="nav-link text-light"  href="https://wagtail.org/packages/"> Packages</a></li>
+                        
+                            
+                            
+                            <li class="nav-item"><a class="nav-link text-light"  href="https://wagtail.org/developers/"> Developers</a></li>
+                        
+                    </ul>
+                </nav>
+            
+            <div class="text-center">
+                    &copy; Copyright 2025, ikeda
+            </div>
+            <div class="text-center text-white-50 font-italic mt-3">
+                <small>
+                    Created using
+                    <a class="text-white" href="https://github.com/wagtail/sphinx_wagtail_theme" rel="nofollow" target="_blank">
+                        Sphinx Wagtail Theme 6.5.0
+                    </a>
+                    and
+                    <a class="text-white" href="https://www.sphinx-doc.org/" rel="nofollow" target="_blank">
+                        Sphinx 8.2.3
+                    </a>
+                </small>
+            </div>
+        </div>
+    </div>
+        </div>
+    </footer>
+        <script src="_static/documentation_options.js?v=01f34227"></script>
+        <script src="_static/doctools.js?v=9bcbadda"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+        <script src="_static/copybutton.js?v=f281be69"></script>
+        <script type="text/javascript" src="_static/dist/theme.js"></script>
+        <script type="text/javascript" src="_static/dist/vendor.js"></script>
+        <script type="text/javascript" src="_static/searchtools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function() { Search.loadIndex("searchindex.js"); });
+        </script>
+        <script type="text/javascript" id="searchindexloader"></script>
+    </body>
+</html>

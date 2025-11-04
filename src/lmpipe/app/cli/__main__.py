@@ -4,7 +4,7 @@ from clipar import NotSelected
 from lmpipe.estimator._base import Estimator
 from lmpipe.options import LMPipeOptionsPartial
 from lmpipe.utils import SrcDst
-from .args import GlobalArgs, plugins
+from ._args import GlobalArgs, plugins
 
 def main():
 
@@ -302,9 +302,7 @@ def main():
             )
 
         class SampleExecutorInitializer(
-            LMPipeInterface.SampleExecutorInitializer[
-                'CliLMPipeInterface'
-            ]
+            LMPipeInterface.SampleExecutorInitializer
             ):
 
             def __call__(self):

@@ -22,6 +22,15 @@ MODELS = {
 ASSETS_PATH = Path(__file__).parents[4] / "assets" / "mediapipe"
 
 def get_model(part: str, model: str) -> str:
+    """Get the local path of the MediaPipe model, downloading it if necessary.
+
+    Args:
+        part (str): The part of the model (e.g., "pose", "hand", "face").
+        model (str): The specific model variant (e.g., "lite", "full", "heavy").
+
+    Returns:
+        :code:`str`: The local file path to the MediaPipe model.
+    """
 
     tasks = MODELS.get(part)
     if tasks is None:
@@ -54,6 +63,11 @@ from mediapipe.tasks.python.core.base_options import BaseOptions # pyright: igno
 from mediapipe.tasks.python.vision.core.vision_task_running_mode import VisionTaskRunningMode # pyright: ignore[reportMissingTypeStubs]
 
 class MediaPipeEstimator(Estimator):
+    """Base class for MediaPipe estimators in LMPipe plugin.
+
+    Args:
+        common_args (MediaPipeCommonArgs): Common arguments for all MediaPipe tasks.
+    """
 
     MEDIAPIPE_CHANNELS = 4
     def _get_array_from_landmarks(

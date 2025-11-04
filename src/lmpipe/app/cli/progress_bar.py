@@ -179,7 +179,7 @@ class ProgressManager:
         del self._map_qs[worker_id]
 
     def start(self) -> Self:
-        """ Start the ProgressManager.
+        """Start the ProgressManager.
 
         Returns:
             Self: The ProgressManager instance.
@@ -238,6 +238,7 @@ class ProgressManager:
         return self._id
 
     def _manager_thread_fn(self):
+        """Main loop for the ProgressManager thread."""
 
         while True:
 
@@ -277,6 +278,7 @@ class ProgressManager:
                 )
 
     def _handle_init_func(self, func: _InitFunc[...]) -> _MapItem[Any]:
+        """Initialize a new Progress instance."""
         try:
             progress = func()
         except Exception as e:
@@ -285,6 +287,7 @@ class ProgressManager:
         return _MapItem(progress_id=progress_id)
 
     def _handle_method_func(self, func: _MethodFunc[..., Any]) -> _MapItem[Any]:
+        """Invoke a method on an existing Progress instance."""
         progress_id = self._val_progress_id(func.progress_id)
         if progress_id is None:
             return _MapItem(
@@ -301,17 +304,20 @@ class ProgressManager:
         return _MapItem(progress_id=progress_id, result=result)
 
     def _register_progress(self, progress: Progress) -> _ProgressId:
+        """Register a new Progress instance."""
         progress_id = self._next_progress_id
         self._progress_registry[progress_id] = progress
         self._next_progress_id += 1
         return progress_id
 
     def _val_progress_id(self, progress_id: _ProgressId) -> _ProgressId | None:
+        """Validate a progress ID."""
         if progress_id not in self._progress_registry:
             return None
         return progress_id
 
     def _get_map_q(self, worker_id: _WorkerId) -> 'Queue[_MapItem[Any]]':
+        """Get the map queue for a specific worker ID."""
         if worker_id not in self._map_qs:
             raise RuntimeError(
                 f"{self._fqn}: No map queue registered for worker ID {worker_id}"
@@ -320,6 +326,7 @@ class ProgressManager:
 
     @property
     def _fqn(self) -> str:
+        """Fully qualified name of the ProgressManager."""
         return f"{self.__class__.__module__}.{self.__class__.__qualname__}"
 
     ########################## Worker Process Methods ##########################
@@ -330,10 +337,8 @@ class ProgressManager:
         """Get a ProgressClient instance.
 
         ProgressClient provides an interface for using ProgressManager
-        in worker processes.  
-        This method must only be called within the same process
-        and thread context where
-        the ProgressManager was constructed.
+        in worker processes. This method must only be called within the same
+        process and thread context where the ProgressManager was constructed.
 
         Serialization of ProgressManager is only allowed through ProgressClient,
         ensuring safety in inter-process communication.
@@ -342,8 +347,7 @@ class ProgressManager:
         identical to the thread ID.
 
         Returns:
-            ProgressClient:
-                ProgressClient instance corresponding to this ProgressManager
+            ProgressClient: ProgressClient instance corresponding to this ProgressManager.
 
         Note:
             - ProgressClient operates as a singleton within the same thread
@@ -355,6 +359,7 @@ class ProgressManager:
 
     @contextmanager
     def _serialize_with_client(self, client: "ProgressClient") -> Iterator[_ProgressManagerSpawningContext]:
+        """Context manager for serializing ProgressManager with ProgressClient."""
         self._with_client = True
         yield _ProgressManagerSpawningContext(
             reduce_q=self._reduce_q,
@@ -363,6 +368,7 @@ class ProgressManager:
         self._with_client = False
 
     def _store_spawning_context(self, context: _ProgressManagerSpawningContext):
+        """Store spawning context during deserialization."""
         self._reduce_q = context.reduce_q
         self._map_qs = context.map_qs
 
@@ -400,6 +406,59 @@ class ProgressManager:
             assert_spawning(self) # !!! multiprocessing context check !!!
 
 class ProgressClient:
+    """Client interface for ProgressManager in worker processes.
+
+    This class provides methods to interact with ProgressManager
+    from worker processes, allowing for progress bar management
+    across multiple threads and processes.
+
+    Args:
+        manager (ProgressManager): The associated ProgressManager instance.
+        worker_id (_WorkerId): Unique identifier for the worker thread.
+
+    Example::
+
+        from rich.progress import Progress, BarColumn, TextColumn
+        from lmpipe.app.cli.progress_bar import ProgressManager
+
+        # Create and start ProgressManager
+        manager = ProgressManager().start()
+        client = manager.get_client()
+
+        # Create a new progress bar
+        progress_id = client.run_progress_init(
+            Progress,
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+        )
+
+        # Start a task in the progress bar
+        client.run_progress_method(
+            progress_id,
+            Progress.add_task,
+            description="Processing",
+            total=100,
+        )
+
+        # Update task progress
+        for i in range(100):
+            client.run_progress_method(
+                progress_id,
+                Progress.update,
+                task_id=0,
+                completed=i,
+            )
+
+        # Finalize the task
+        client.run_progress_method(
+            progress_id,
+            Progress.stop_task,
+            task_id=0,
+        )
+
+        # Stop the ProgressManager when done
+        manager.stop()
+    """
 
     _manager: ProgressManager
     _map_q: 'Queue[_MapItem[Any]]'
@@ -452,6 +511,7 @@ class ProgressClient:
         reduce_item: _ReduceItem[R],
         throw: bool = True
     ) -> _MapItem[R]:
+        """Send a ReduceItem to the ProgressManager and wait for the MapItem."""
 
         if self._manager.manager_state != ProgressManagerState.STARTED:
             raise RuntimeError(
@@ -469,6 +529,7 @@ class ProgressClient:
 
     @property
     def _reduce_q(self) -> 'Queue[_ReduceItem[Any] | None]':
+        """Get the reduce queue from the associated ProgressManager."""
         return self._manager._reduce_q # pyright: ignore[reportPrivateUsage]
 
     @property
@@ -490,10 +551,22 @@ class ProgressClient:
             **kwargs: Keyword arguments to pass to the initializer.
 
         Raises:
-            map_item.exception: If the ProgressManager is stopped.
+            Exception: If the ProgressManager is stopped or encounters an error.
 
         Returns:
             _ProgressId: The ID of the newly created progress bar.
+
+        Note:
+            Only arguments that can be serialized may be provided.
+
+        Example::
+
+            # Initialize a new progress bar
+            client.run_progress_init(
+                Progress.start_task,
+                task_id=0,
+                total=100,
+            )
         """
 
         reduce_item = _ReduceItem[Any](
@@ -514,11 +587,30 @@ class ProgressClient:
         ) -> R:
         """Run a method on the progress bar.
 
+        Args:
+            progress_id: The ID of the progress bar.
+            method_like: The method to invoke on the progress bar.
+            *args: Positional arguments to pass to the method.
+            **kwargs: Keyword arguments to pass to the method.
+
         Raises:
-            map_item.exception: If the ProgressManager is stopped.
+            Exception: If the ProgressManager is stopped or encounters an error.
 
         Returns:
             R: The result of the method call.
+
+        Note:
+            Only arguments that can be serialized may be provided.
+
+        Example::
+
+            # Update progress bar
+            client.run_progress_method(
+                progress_id,
+                Progress.update,
+                task_id=0,
+                completed=50,
+            )
         """
 
         reduce_item = _ReduceItem(

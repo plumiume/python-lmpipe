@@ -47,15 +47,21 @@ type _Info3 = tuple[
 ]
 def _is_info3(v: Any) -> TypeGuard[_Info3]:
     return len(v) == 3
-type _Plugins = dict[TypeLiteral, dict[_PluginName, _Info2]]
+type Plugins = dict[TypeLiteral, dict[_PluginName, _Info2]]
 
-def load_plugins() -> _Plugins:
+def load_plugins() -> Plugins:
+    """Load estimator plugins from entry points.
+
+    Returns:
+        :code:`Plugins`: A dictionary mapping type literals to plugin
+        names and their corresponding argument wrappers and factory functions.
+    """
 
     entry_points = importlib.metadata.entry_points(
         group="lmpipe.plugins"
     )
 
-    plugins: _Plugins = {t: {} for t in TYPE_LITERALS}
+    plugins: Plugins = {t: {} for t in TYPE_LITERALS}
 
     for ep in entry_points:
 

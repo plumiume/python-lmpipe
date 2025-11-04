@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en" data-content_root="./">
+<head>
+    <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+        <title>lmpipe.app.cli.progress_bar module &mdash; lmpipe 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" type="text/css" href="_static/dist/fontawesome.css" />
+      <link rel="stylesheet" type="text/css" href="_static/dist/theme.css?v=310cf088" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+            <link rel="index" title="Index" href="genindex.html" />
+            <link rel="search" title="Search" href="search.html" />
+            <link rel="top" title="lmpipe 0.1.0 documentation" href="#" />
+    </head>
+<body>
+    <script type="text/javascript" src="_static/dist/blocking.js"></script>
+    <header class="container-fluid bg-primary">
+        <a class="btn btn-sm btn-light skip-to-content-link" href="#main">Skip to content</a>
+        <div class="container-fluid">
+            <div class="navbar navbar-expand-lg navbar-dark font-weight-bold">
+                    <a href="index.html"
+                        title="Wagtail"
+                        class="logo navbar-brand"
+                    >
+                        <img src="_static/img/wagtail-logo-circle.svg" width="45" height="59" alt="Wagtail"
+                            class="logo-img"
+                        />
+                        Sphinx Wagtail Theme
+                    </a>
+                
+                
+                <button class="navbar-toggler btn btn-primary d-lg-none" type="button" data-toggle="collapse" data-target="#collapseSidebar" aria-expanded="false" aria-controls="collapseExample">
+                    <span class="navbar-toggler-icon"></span>
+                    <span class="sr-only">menu</span>
+                </button>
+            </div>
+        </div>
+    </header>
+    <div class="container-fluid">
+        <div class="row">
+            <aside class="col-12 col-lg-3 sidebar-container">
+                <div id="collapseSidebar" class="collapse sticky-top d-lg-block pt-5 pr-lg-4">
+<div id="searchbox" class="searchbox mb-6 px-1" role="search">
+    <form id="search-form" action="search.html" autocomplete="off" method="get" role="search">
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <div class="input-group-text border-right-0 bg-white py-3 pl-3 pr-2"><span class="fas fa-search"></span></div>
+            </div>
+            <input class="form-control py-3 pr-3 pl-1 h-100 border-left-0" type="search" name="q" placeholder="Search documentation" aria-label="Search documentation" id="searchinput" />
+        </div>
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div><div class="site-toc">
+    <nav class="toc mt-3" aria-label="Main menu">
+        <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">lmpipe</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="lmpipe.html">lmpipe package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="lmpipe.app.html">lmpipe.app package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.app.cli.html">lmpipe.app.cli module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="lmpipe.collector.html">lmpipe.collector package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.collector.annotated_frames_viewer.html">lmpipe.collector.annotated_frames_viewer package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.collector.annotated_frames_viewer.options.html">lmpipe.collector.annotated_frames_viewer.options module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.collector.annotated_frames_viewer.viewers.html">lmpipe.collector.annotated_frames_viewer.viewers module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.collector.annotated_frames_writer.html">lmpipe.collector.annotated_frames_writer package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.collector.annotated_frames_writer.options.html">lmpipe.collector.annotated_frames_writer.options module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.collector.annotated_frames_writer.writers.html">lmpipe.collector.annotated_frames_writer.writers module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.collector.landmarks_matrix_writer.html">lmpipe.collector.landmarks_matrix_writer package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.collector.landmarks_matrix_writer.options.html">lmpipe.collector.landmarks_matrix_writer.options module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.collector.landmarks_matrix_writer.writers.html">lmpipe.collector.landmarks_matrix_writer.writers module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.collector.base.html">lmpipe.collector.base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.collector.types.html">lmpipe.collector.types module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="lmpipe.estimator.html">lmpipe.estimator package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.estimator.holistic.html">lmpipe.estimator.holistic package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.estimator.holistic.args.html">lmpipe.estimator.holistic.args module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.estimator.holistic.main.html">lmpipe.estimator.holistic.main module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="lmpipe.interface.html">lmpipe.interface package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.interface.executor.html">lmpipe.interface.executor module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="lmpipe.plugins.html">lmpipe.plugins package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.plugins.mediapipe.html">lmpipe.plugins.mediapipe package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.plugins.mediapipe.face.html">lmpipe.plugins.mediapipe.face package</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="lmpipe.plugins.mediapipe.face.args.html">lmpipe.plugins.mediapipe.face.args module</a></li>
+<li class="toctree-l6"><a class="reference internal" href="lmpipe.plugins.mediapipe.face.main.html">lmpipe.plugins.mediapipe.face.main module</a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.plugins.mediapipe.hand.html">lmpipe.plugins.mediapipe.hand package</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="lmpipe.plugins.mediapipe.hand.args.html">lmpipe.plugins.mediapipe.hand.args module</a></li>
+<li class="toctree-l6"><a class="reference internal" href="lmpipe.plugins.mediapipe.hand.main.html">lmpipe.plugins.mediapipe.hand.main module</a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.plugins.mediapipe.pose.html">lmpipe.plugins.mediapipe.pose package</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="lmpipe.plugins.mediapipe.pose.args.html">lmpipe.plugins.mediapipe.pose.args module</a></li>
+<li class="toctree-l6"><a class="reference internal" href="lmpipe.plugins.mediapipe.pose.main.html">lmpipe.plugins.mediapipe.pose.main module</a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.plugins.mediapipe.args.html">lmpipe.plugins.mediapipe.args module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="lmpipe.plugins.mediapipe.core.html">lmpipe.plugins.mediapipe.core module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="lmpipe.plugins.loader.html">lmpipe.plugins.loader module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="lmpipe.options.html">lmpipe.options module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lmpipe.utils.html">lmpipe.utils module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+    </nav>
+    <template data-toggle-item-template>
+        <button class="btn btn-sm btn-link toctree-expand" type="button">
+            <span class="sr-only">Toggle menu contents</span>
+        </button>
+    </template>
+</div>
+                    <div class="d-lg-none border-bottom">
+                        
+                    </div>
+                </div>
+            </aside>
+            <div class="col-12 col-lg-9 pt-5">
+                <header class="row align-items-baseline">
+                    <div class="col">
+                        <nav aria-label="breadcrumb">
+    <ol class="breadcrumb m-0 p-0 bg-transparent">
+        <li class="breadcrumb-item"><a href="index.html">Docs</a></li>
+        <li class="breadcrumb-item active" aria-current="page">lmpipe.app.cli.progress_bar module</li>
+    </ol>
+</nav>
+                    </div>
+                    <div class="col-sm-12 col-lg-auto mt-3 mt-lg-3">
+                        <noscript>
+                            <p>JavaScript is required to toggle light/dark mode..</p>
+                        </noscript>
+                        <button id="wagtail-theme" class="btn btn-sm btn-light text-decoration-none" type="button">
+                            <span class="dark-only"><i class="fas fa-sun"></i> Light mode</span>
+                            <span class="light-only"><i class="fas fa-moon"></i> Dark mode</span>
+                        </button>
+    <a class="btn btn-sm btn-light text-decoration-none" href="https://github.com/wagtail/sphinx_wagtail_theme/blob/main/docs/lmpipe.app.cli.progress_bar.rst" rel="nofollow">
+        <span class="btn-icon"><span class="fab fa-github"></span></span>
+        <span class="btn-text">Edit on GitHub</span>
+    </a>
+    <a class="btn btn-sm btn-light text-decoration-none" href="_sources/lmpipe.app.cli.progress_bar.rst.txt" rel="nofollow">
+        <span class="btn-icon"><span class="fas fa-code"></span></span>
+        <span class="btn-text">View source</span>
+    </a>
+                        
+                    </div>
+                </header>
+                <div class="row" >
+                    <div class="col-12">
+                        <hr class="w-100 my-4">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-lg-9 order-last order-lg-first rst-content">
+                        <main role="main" id="main">
+    <section id="module-lmpipe.app.cli.progress_bar">
+<span id="lmpipe-app-cli-progress-bar-module"></span><h1>lmpipe.app.cli.progress_bar module<a class="headerlink" href="#module-lmpipe.app.cli.progress_bar" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="lmpipe.app.cli.progress_bar.ProgressManagerState">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lmpipe.app.cli.progress_bar.</span></span><span class="sig-name descname"><span class="pre">ProgressManagerState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.app.cli.progress_bar.ProgressManagerState" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">IntEnum</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.app.cli.progress_bar.ProgressManagerState.INITIALIZED">
+<span class="sig-name descname"><span class="pre">INITIALIZED</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#lmpipe.app.cli.progress_bar.ProgressManagerState.INITIALIZED" title="Link to this definition">¶</a></dt>
+<dd><p>The ProgressManager has been initialized but not started.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.app.cli.progress_bar.ProgressManagerState.STARTED">
+<span class="sig-name descname"><span class="pre">STARTED</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#lmpipe.app.cli.progress_bar.ProgressManagerState.STARTED" title="Link to this definition">¶</a></dt>
+<dd><p>The ProgressManager is actively managing progress.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lmpipe.app.cli.progress_bar.ProgressManagerState.STOPPED">
+<span class="sig-name descname"><span class="pre">STOPPED</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em><a class="headerlink" href="#lmpipe.app.cli.progress_bar.ProgressManagerState.STOPPED" title="Link to this definition">¶</a></dt>
+<dd><p>The ProgressManager has been stopped.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="lmpipe.app.cli.progress_bar.ProgressManager">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lmpipe.app.cli.progress_bar.</span></span><span class="sig-name descname"><span class="pre">ProgressManager</span></span><a class="headerlink" href="#lmpipe.app.cli.progress_bar.ProgressManager" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Manages Progress instances across multiple worker processes and threads.</p>
+<p>This class is responsible for coordinating the progress of tasks
+across multiple workers, ensuring that progress updates are sent
+to the correct progress bars.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – If the ProgressManager is misused.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="lmpipe.app.cli.progress_bar.ProgressManager.start">
+<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.app.cli.progress_bar.ProgressManager.start" title="Link to this definition">¶</a></dt>
+<dd><p>Start the ProgressManager.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Self</em> – The ProgressManager instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lmpipe.app.cli.progress_bar.ProgressManager.stop">
+<span class="sig-name descname"><span class="pre">stop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.app.cli.progress_bar.ProgressManager.stop" title="Link to this definition">¶</a></dt>
+<dd><p>Stop the ProgressManager.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lmpipe.app.cli.progress_bar.ProgressManager.manager_state">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">manager_state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#lmpipe.app.cli.progress_bar.ProgressManagerState" title="lmpipe.app.cli.progress_bar.ProgressManagerState"><span class="pre">ProgressManagerState</span></a></em><a class="headerlink" href="#lmpipe.app.cli.progress_bar.ProgressManager.manager_state" title="Link to this definition">¶</a></dt>
+<dd><p>Get the current state of the ProgressManager.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>ProgressManagerState</em> – The current state of the ProgressManager.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lmpipe.app.cli.progress_bar.ProgressManager.manager_id">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">manager_id</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">_ManagerId</span></em><a class="headerlink" href="#lmpipe.app.cli.progress_bar.ProgressManager.manager_id" title="Link to this definition">¶</a></dt>
+<dd><p>Get the unique ID of the ProgressManager.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>_ManagerId</em> – The unique ID of the ProgressManager.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lmpipe.app.cli.progress_bar.ProgressManager.get_client">
+<span class="sig-name descname"><span class="pre">get_client</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.app.cli.progress_bar.ProgressManager.get_client" title="Link to this definition">¶</a></dt>
+<dd><p>Get a ProgressClient instance.</p>
+<p>ProgressClient provides an interface for using ProgressManager
+in worker processes. This method must only be called within the same
+process and thread context where the ProgressManager was constructed.</p>
+<p>Serialization of ProgressManager is only allowed through ProgressClient,
+ensuring safety in inter-process communication.</p>
+<p>One ProgressClient instance is created per thread, and the WorkerID is
+identical to the thread ID.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>ProgressClient</em> – ProgressClient instance corresponding to this ProgressManager.</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>ProgressClient operates as a singleton within the same thread</p></li>
+<li><p>Handoff to worker processes is performed via ProgressClient</p></li>
+</ul>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="lmpipe.app.cli.progress_bar.ProgressClient">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lmpipe.app.cli.progress_bar.</span></span><span class="sig-name descname"><span class="pre">ProgressClient</span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><em class="sig-param"><span class="n"><span class="pre">manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#lmpipe.app.cli.progress_bar.ProgressManager" title="lmpipe.app.cli.progress_bar.ProgressManager"><span class="pre">ProgressManager</span></a></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">worker_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">_WorkerId</span></span></em>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.app.cli.progress_bar.ProgressClient" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Client interface for ProgressManager in worker processes.</p>
+<p>This class provides methods to interact with ProgressManager
+from worker processes, allowing for progress bar management
+across multiple threads and processes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>manager</strong> (<a class="reference internal" href="#lmpipe.app.cli.progress_bar.ProgressManager" title="lmpipe.app.cli.progress_bar.ProgressManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProgressManager</span></code></a>) – The associated ProgressManager instance.</p></li>
+<li><p><strong>worker_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">_WorkerId</span></code>) – Unique identifier for the worker thread.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">rich.progress</span><span class="w"> </span><span class="kn">import</span> <span class="n">Progress</span><span class="p">,</span> <span class="n">BarColumn</span><span class="p">,</span> <span class="n">TextColumn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lmpipe.app.cli.progress_bar</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProgressManager</span>
+
+<span class="c1"># Create and start ProgressManager</span>
+<span class="n">manager</span> <span class="o">=</span> <span class="n">ProgressManager</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">get_client</span><span class="p">()</span>
+
+<span class="c1"># Create a new progress bar</span>
+<span class="n">progress_id</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">run_progress_init</span><span class="p">(</span>
+    <span class="n">Progress</span><span class="p">,</span>
+    <span class="n">TextColumn</span><span class="p">(</span><span class="s2">&quot;[progress.description]</span><span class="si">{task.description}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="n">BarColumn</span><span class="p">(),</span>
+<span class="p">)</span>
+
+<span class="c1"># Start a task in the progress bar</span>
+<span class="n">client</span><span class="o">.</span><span class="n">run_progress_method</span><span class="p">(</span>
+    <span class="n">progress_id</span><span class="p">,</span>
+    <span class="n">Progress</span><span class="o">.</span><span class="n">add_task</span><span class="p">,</span>
+    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Processing&quot;</span><span class="p">,</span>
+    <span class="n">total</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Update task progress</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">run_progress_method</span><span class="p">(</span>
+        <span class="n">progress_id</span><span class="p">,</span>
+        <span class="n">Progress</span><span class="o">.</span><span class="n">update</span><span class="p">,</span>
+        <span class="n">task_id</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">completed</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<span class="c1"># Finalize the task</span>
+<span class="n">client</span><span class="o">.</span><span class="n">run_progress_method</span><span class="p">(</span>
+    <span class="n">progress_id</span><span class="p">,</span>
+    <span class="n">Progress</span><span class="o">.</span><span class="n">stop_task</span><span class="p">,</span>
+    <span class="n">task_id</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Stop the ProgressManager when done</span>
+<span class="n">manager</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+</pre></div>
+</div>
+<dl class="py property">
+<dt class="sig sig-object py" id="lmpipe.app.cli.progress_bar.ProgressClient.manager">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">manager</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#lmpipe.app.cli.progress_bar.ProgressManager" title="lmpipe.app.cli.progress_bar.ProgressManager"><span class="pre">ProgressManager</span></a></em><a class="headerlink" href="#lmpipe.app.cli.progress_bar.ProgressClient.manager" title="Link to this definition">¶</a></dt>
+<dd><p>Associated ProgressManager instance.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lmpipe.app.cli.progress_bar.ProgressClient.run_progress_init">
+<span class="sig-name descname"><span class="pre">run_progress_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">init_like</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.app.cli.progress_bar.ProgressClient.run_progress_init" title="Link to this definition">¶</a></dt>
+<dd><p>Start a new progress bar.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>init_like</strong> – A callable that initializes the progress bar.</p></li>
+<li><p><strong>*args</strong> – Positional arguments to pass to the initializer.</p></li>
+<li><p><strong>**kwargs</strong> – Keyword arguments to pass to the initializer.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Exception</strong> – If the ProgressManager is stopped or encounters an error.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>_ProgressId</em> – The ID of the newly created progress bar.</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Only arguments that can be serialized may be provided.</p>
+</div>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize a new progress bar</span>
+<span class="n">client</span><span class="o">.</span><span class="n">run_progress_init</span><span class="p">(</span>
+    <span class="n">Progress</span><span class="o">.</span><span class="n">start_task</span><span class="p">,</span>
+    <span class="n">task_id</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">total</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lmpipe.app.cli.progress_bar.ProgressClient.run_progress_method">
+<span class="sig-name descname"><span class="pre">run_progress_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">progress_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_like</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lmpipe.app.cli.progress_bar.ProgressClient.run_progress_method" title="Link to this definition">¶</a></dt>
+<dd><p>Run a method on the progress bar.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>progress_id</strong> – The ID of the progress bar.</p></li>
+<li><p><strong>method_like</strong> – The method to invoke on the progress bar.</p></li>
+<li><p><strong>*args</strong> – Positional arguments to pass to the method.</p></li>
+<li><p><strong>**kwargs</strong> – Keyword arguments to pass to the method.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Exception</strong> – If the ProgressManager is stopped or encounters an error.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>R</em> – The result of the method call.</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Only arguments that can be serialized may be provided.</p>
+</div>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Update progress bar</span>
+<span class="n">client</span><span class="o">.</span><span class="n">run_progress_method</span><span class="p">(</span>
+    <span class="n">progress_id</span><span class="p">,</span>
+    <span class="n">Progress</span><span class="o">.</span><span class="n">update</span><span class="p">,</span>
+    <span class="n">task_id</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">completed</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+</main>
+                        
+                    </div>
+                    
+                    <nav class="col-12 col-lg-3 pb-4">
+                        <div class="sticky-top toc page-toc" aria-labelledby="page-toc-heading">
+                            <p class="font-weight-bold" id="page-toc-heading">Page contents</p>
+                            <ul>
+<li><a class="reference internal" href="#">lmpipe.app.cli.progress_bar module</a><ul>
+<li><a class="reference internal" href="#lmpipe.app.cli.progress_bar.ProgressManagerState"><code class="docutils literal notranslate"><span class="pre">ProgressManagerState</span></code></a><ul>
+<li><a class="reference internal" href="#lmpipe.app.cli.progress_bar.ProgressManagerState.INITIALIZED"><code class="docutils literal notranslate"><span class="pre">ProgressManagerState.INITIALIZED</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.app.cli.progress_bar.ProgressManagerState.STARTED"><code class="docutils literal notranslate"><span class="pre">ProgressManagerState.STARTED</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.app.cli.progress_bar.ProgressManagerState.STOPPED"><code class="docutils literal notranslate"><span class="pre">ProgressManagerState.STOPPED</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#lmpipe.app.cli.progress_bar.ProgressManager"><code class="docutils literal notranslate"><span class="pre">ProgressManager</span></code></a><ul>
+<li><a class="reference internal" href="#lmpipe.app.cli.progress_bar.ProgressManager.start"><code class="docutils literal notranslate"><span class="pre">ProgressManager.start()</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.app.cli.progress_bar.ProgressManager.stop"><code class="docutils literal notranslate"><span class="pre">ProgressManager.stop()</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.app.cli.progress_bar.ProgressManager.manager_state"><code class="docutils literal notranslate"><span class="pre">ProgressManager.manager_state</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.app.cli.progress_bar.ProgressManager.manager_id"><code class="docutils literal notranslate"><span class="pre">ProgressManager.manager_id</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.app.cli.progress_bar.ProgressManager.get_client"><code class="docutils literal notranslate"><span class="pre">ProgressManager.get_client()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#lmpipe.app.cli.progress_bar.ProgressClient"><code class="docutils literal notranslate"><span class="pre">ProgressClient</span></code></a><ul>
+<li><a class="reference internal" href="#lmpipe.app.cli.progress_bar.ProgressClient.manager"><code class="docutils literal notranslate"><span class="pre">ProgressClient.manager</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.app.cli.progress_bar.ProgressClient.run_progress_init"><code class="docutils literal notranslate"><span class="pre">ProgressClient.run_progress_init()</span></code></a></li>
+<li><a class="reference internal" href="#lmpipe.app.cli.progress_bar.ProgressClient.run_progress_method"><code class="docutils literal notranslate"><span class="pre">ProgressClient.run_progress_method()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+                        </div>
+                    </nav>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer class="container-fluid bg-primary text-light">
+        <div class="container">
+            <div class="row">
+        <div class="col p-4">
+            
+                <nav aria-label="Footer">
+                    <ul class="nav justify-content-center mb-2">
+                        
+                            
+                            
+                            <li class="nav-item"><a class="nav-link text-light"  href="https://wagtail.org/features/">Features</a></li>
+                        
+                            
+                            
+                            <li class="nav-item"><a class="nav-link text-light"  href="https://wagtail.org/about-wagtail/"> About Wagtail</a></li>
+                        
+                            
+                            
+                            <li class="nav-item"><a class="nav-link text-light"  href="https://wagtail.org/services/"> Services</a></li>
+                        
+                            
+                            
+                            <li class="nav-item"><a class="nav-link text-light"  href="https://wagtail.org/blog/"> Blog</a></li>
+                        
+                            
+                            
+                            <li class="nav-item"><a class="nav-link text-light"  href="https://wagtail.org/packages/"> Packages</a></li>
+                        
+                            
+                            
+                            <li class="nav-item"><a class="nav-link text-light"  href="https://wagtail.org/developers/"> Developers</a></li>
+                        
+                    </ul>
+                </nav>
+            
+            <div class="text-center">
+                    &copy; Copyright 2025, ikeda
+            </div>
+            <div class="text-center text-white-50 font-italic mt-3">
+                <small>
+                    Created using
+                    <a class="text-white" href="https://github.com/wagtail/sphinx_wagtail_theme" rel="nofollow" target="_blank">
+                        Sphinx Wagtail Theme 6.5.0
+                    </a>
+                    and
+                    <a class="text-white" href="https://www.sphinx-doc.org/" rel="nofollow" target="_blank">
+                        Sphinx 8.2.3
+                    </a>
+                </small>
+            </div>
+        </div>
+    </div>
+        </div>
+    </footer>
+        <script src="_static/documentation_options.js?v=01f34227"></script>
+        <script src="_static/doctools.js?v=9bcbadda"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+        <script src="_static/copybutton.js?v=f281be69"></script>
+        <script type="text/javascript" src="_static/dist/theme.js"></script>
+        <script type="text/javascript" src="_static/dist/vendor.js"></script>
+        <script type="text/javascript" src="_static/searchtools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function() { Search.loadIndex("searchindex.js"); });
+        </script>
+        <script type="text/javascript" id="searchindexloader"></script>
+    </body>
+</html>
