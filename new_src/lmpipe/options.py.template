@@ -1,7 +1,12 @@
+#!/usr/bin/env python
 #${import_typeddict}
 #${from_clipar_import_mixin_group}
 
-from .typedefs import ExecutorMode, ExecutorType, AlreadyExistFileRule
+from .typedefs import (
+    ExecutorMode, ExecutorType, AlreadyExistFileRule,
+    LandmarkExtLiteral, AnnotatedFramesExtLiteral,
+    AnnotatedFramesShowFrameworkLiteral
+)
 
 class RequiresResources:
     """Type definition for resource requirement configuration."""
@@ -18,20 +23,20 @@ class OutputOptions:
     """Type definition for output configuration options."""
 
     # Landmarks Matrix Options
-    landmarks_matrix_save_format: str | None = None
+    landmarks_matrix_save_format: LandmarkExtLiteral | None = None
     'format to save landmarks matrix, default is None'
-    landmarks_matrix_save_mode: AlreadyExistFileRule = 'skip'
-    'mode to save landmarks matrix, default is "skip"'
+    landmarks_matrix_save_exist_file_rule: AlreadyExistFileRule = 'skip'
+    'rule when the landmarks matrix file already exists'
 
     # Annotated Frames Options
-    annotated_frames_show_format: str | None = None
-    'format to show annotated frames, default is None'
+    annotated_frames_show_framework: AnnotatedFramesShowFrameworkLiteral | None = None
+    'framework to show annotated frames, default is None'
 
     # Annotated Frames Save Options
-    annotated_frames_save_format: str | None = None
+    annotated_frames_save_format: AnnotatedFramesExtLiteral | None = None
     'format to save annotated frames, default is None'
-    annotated_frames_save_mode: AlreadyExistFileRule = 'skip'
-    'mode to save annotated frames, default is "skip"'
+    annotated_frames_save_exist_file_rule: AlreadyExistFileRule = 'skip'
+    'rule when the annotated frames file already exists'
     annotated_frames_save_width: int = 640
     'width to save annotated frames'
     annotated_frames_save_height: int = 480

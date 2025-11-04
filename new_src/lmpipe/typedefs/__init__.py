@@ -33,7 +33,35 @@ else:
 
 # Literals
 
-ExecutorMode = Literal['batch', 'frames'] | None
-ExecutorType = Literal['thread', 'process']
+type ExecutorMode = Literal['batch', 'frames'] | None
+type ExecutorType = Literal['thread', 'process']
 
-AlreadyExistFileRule = Literal['skip', 'overwrite', 'postfix', 'error']
+type AlreadyExistFileRule = Literal['skip', 'overwrite', 'postfix', 'error']
+
+### Landmarks Matrix Extensions ###
+
+# MultiMatrixはSingleなファイルとしても使用可能
+type LandmarkTextMatrixExtLiteral = Literal['.csv', '.tsv', '.json']
+type LandmarkSingleMatrixExtLiteral = Literal['.npy']
+type LandmarkMultiMatrixExtLiteral = Literal['.npz', '.pt', '.pth', '.safetensors']
+
+type LandmarkExtLiteral = (
+    LandmarkTextMatrixExtLiteral |
+    LandmarkSingleMatrixExtLiteral |
+    LandmarkMultiMatrixExtLiteral
+)
+
+
+### Annotated Frames Show Frameworks ###
+type AnnotatedFramesShowFrameworkLiteral = Literal['opencv', 'matplotlib']
+
+
+### Annotated Frames Save Extensions ###
+type AnnotatedFramesVideoExtLiteral = Literal['.mp4', '.avi', '.mov']
+type AnnotatedFramesImageExtLiteral = Literal['.jpg', '.png', '.bmp', '.tiff']
+
+type AnnotatedFramesExtLiteral = (
+    AnnotatedFramesVideoExtLiteral |
+    AnnotatedFramesImageExtLiteral
+)
+
